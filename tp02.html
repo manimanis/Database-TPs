@@ -14,215 +14,515 @@
 <body>
   <main id="main" class="container">
     <h1>TP n°2</h1>
-    <ol>
-      <li v-if="currentQuestion >= 0">Connecter à MariaDB.
-        <div class="my-1">
-          <label for="server">Serveur</label>
-          <input type="text" id="serer" class="form-control" v-model="host">
+    <div class="my-1" v-if="!isConnected">
+      <div class="my-1"><strong>Connexion au serveur de base de données.</strong></div>
+      <div class="my-1">
+        <label for="server">Serveur</label>
+        <input type="text" id="serer" class="form-control" v-model="connectionSettings.host">
+      </div>
+      <div class="my-1">
+        <label for="user">Utilisateur</label>
+        <input type="text" class="form-control" v-model="connectionSettings.user" placeholder="aucun">
+      </div>
+      <div class="my-1">
+        <label for="server">Mot de passe</label>
+        <input type="text" class="form-control" v-model="connectionSettings.password" placeholder="aucun">
+      </div>
+      <div class="my-1">
+        <label for="server">Base de données</label>
+        <input type="text" class="form-control" v-model="connectionSettings.dbName" placeholder="aucun">
+      </div>
+      <div class="my-1">
+        <label><input type="checkbox" v-model="connectionSettings.dropAndCreateDatabase"> Supprimer et recréer la base
+          de données</label>
+      </div>
+      <div class="my-1">
+        <button type="button" class="btn btn-primary" v-if="currQuestion == 0"
+          v-on:click="connectToServer(0)">Connecter</button>
+      </div>
+      <div class="my-1 text-danger" v-if="!isSuccess[0]" v-html="msg[0]"></div>
+      <div class="my-1 text-success" v-if="isSuccess[0]" v-html="msg[0]"></div>
+    </div>
+
+    <div class="my-1" v-if="isConnected">
+      <ol>
+        <li v-for="li in allLi">
+          <div class="my-1" v-html="li.question"></div>
+          <template v-if="li.hasQuery">
+            <textarea v-if="li.queryParams.type = 'textarea'" class="form-control" cols="30"
+              v-bind:rows="li.queryParams.rows" v-model="userQueries[li.queryParams.numQuery]"></textarea>
+            <div class="my-1"
+              v-if="Array.isArray(data[li.queryParams.numQuery]) && data[li.queryParams.numQuery].length > 0">
+              <table class="table table-sm table-bordered table-striped border-dark">
+                <thead>
+                  <tr>
+                    <th v-for="column in Object.keys(data[li.queryParams.numQuery][0])">{{column}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in data[li.queryParams.numQuery]">
+                    <td v-for="col in Object.keys(row)">{{row[col]}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="my-1 text-danger" v-if="!isSuccess[li.queryParams.numQuery]"
+              v-html="msg[li.queryParams.numQuery]"></div>
+            <div class="my-1 text-success" v-if="isSuccess[li.queryParams.numQuery]"
+              v-html="msg[li.queryParams.numQuery]"></div>
+            <div class="my-1">
+              <button type="button" class="btn"
+                v-bind:class="{'btn-primary': executionCount[li.queryParams.numQuery] == 0, 'btn-secondary': executionCount[li.queryParams.numQuery] != 0}"
+                v-on:click="executeQuery(li.queryParams.numQuery)">Exécuter
+                la requête [{{executionCount[li.queryParams.numQuery] + 1}}]</button>
+            </div>
+            <div class="my-1" v-if="executionCount[li.queryParams.numQuery] > minExecCount">
+              <h3>Correction</h3>
+              <pre v-html="queries[li.queryParams.numQuery]"></pre>
+            </div>
+          </template>
+        </li>
+      </ol>
+    </div>
+
+    <ol id="questions" class="d-none">
+      <li>
+        <div class="question">
+          Le gérant de l'agence de location de voitures a besoin des informations
+          suivantes :
+          <table class="table table-sm table-bordered table-striped border-dark dict-table mb-2">
+            <thead>
+              <tr>
+                <th>Colonne</th>
+                <th>Description</th>
+                <th>Type de données</th>
+                <th>Taille</th>
+                <th>Oblig.</th>
+                <th>Val. par déf.</th>
+                <th>Val. auto.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>matricule</td>
+                <td>Matricule de la voiture</td>
+                <td>Texte</td>
+                <td>10</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>vehicule</td>
+                <td>Marque de la voiture</td>
+                <td>Texte</td>
+                <td>32</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>prix_unit</td>
+                <td>Prix de location pour une journée</td>
+                <td>Numérique réel</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>0.0</td>
+                <td>≥ 0.0</td>
+              </tr>
+              <tr>
+                <td>libre</td>
+                <td>Indique si le véhicule est disponible pour la locations</td>
+                <td>Texte</td>
+                <td>1</td>
+                <td>✔</td>
+                <td>"O"</td>
+                <td>"O" ou "F"</td>
+              </tr>
+              <tr>
+                <td>cin</td>
+                <td>Numéro de la carte d'identité du client</td>
+                <td>Texte</td>
+                <td>10</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>client</td>
+                <td>Nom du client</td>
+                <td>Texte</td>
+                <td>32</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>genre</td>
+                <td>Genre du client (Homme / Femme)</td>
+                <td>Texte</td>
+                <td>1</td>
+                <td>✔</td>
+                <td>"H"</td>
+                <td>"H" ou "F"</td>
+              </tr>
+              <tr>
+                <td>tel</td>
+                <td>Téléphone du client</td>
+                <td>Texte</td>
+                <td>16</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>num_location</td>
+                <td>Numéro de location</td>
+                <td>Entier</td>
+                <td></td>
+                <td>✔</td>
+                <td>Auto incrémenté</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>date_location</td>
+                <td>Date de location du véhicule</td>
+                <td>Date</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>Date du jour</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>date_retour</td>
+                <td>Date de retour du véhicule</td>
+                <td>Date</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>date_retour &gt; date_location</td>
+              </tr>
+              <tr>
+                <td>montant_location</td>
+                <td>Prix total de location du véhicule</td>
+                <td>Numérique réel</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>0.0</td>
+                <td>≥ 0.0</td>
+              </tr>
+            </tbody>
+          </table>
+          <p><strong>On demande de regrouper ces colonnes dans plusieurs entités distinctes.</strong></p>
         </div>
-        <div class="my-1">
-          <label for="user">Utilisateur</label>
-          <input type="text" class="form-control" v-model="user" placeholder="aucun">
-        </div>
-        <div class="my-1">
-          <label for="server">Mot de passe</label>
-          <input type="text" class="form-control" v-model="password" placeholder="aucun">
-        </div>
-        <div class="my-1">
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 0"
-            v-on:click="connectToServer()">Connecter</button>
-        </div>
-        <div class="my-1 text-danger" v-if="!isSuccessful[0]">{{connectMsg[0]}}</div>
-        <div class="my-1 text-success" v-if="isSuccessful[0]">{{connectMsg[0]}}</div>
       </li>
-      <li v-if="currentQuestion >= 1">Créer une nouvelle base de données appelée <code>location_vehicules</code>.
-        <div class="my-1"><input type="text" class="form-control" v-model="queries[1]"></div>
-        <div class="my-1">
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 1"
-            v-on:click="createDatabase()">Question suivante</button>
+      <li>
+        <div class="question">
+          Créer la table <code>vehicules</code>.
+          <p>Les enregistrement de la table sont identifiés par la colonne <code>matricule</code>.</p>
         </div>
-        <div class="my-1 text-danger" v-if="!isSuccessful[1]">{{connectMsg[1]}}</div>
-        <div class="my-1 text-success" v-if="isSuccessful[1]">{{connectMsg[1]}}</div>
+        <div class="query" data-typecontrol="textarea" data-rows="6" data-numquery="2"></div>
+        <pre class="userQuery">CREATE TABLE vehicules</pre>
+        <pre class="correctQuery">CREATE TABLE vehicules (
+  matricule VARCHAR(10) PRIMARY KEY NOT NULL,
+  vehicule VARCHAR(32) NOT NULL,
+  prix_unit DOUBLE NOT NULL DEFAULT 0.0,
+  libre CHAR(1) DEFAULT 'O' CHECK (libre = 'O' OR libre = 'N')
+);</pre>
       </li>
-      <li v-if="currentQuestion >= 2">Le gérant de l'agence de location de voitures a besoin des informations suivantes
-        :
-        <table class="table table-sm table-bordered table-striped border-dark dict-table mb-2">
-          <thead>
-            <tr>
-              <th>Colonne</th>
-              <th>Description</th>
-              <th>Type de données</th>
-              <th>Taille</th>
-              <th>Oblig.</th>
-              <th>Val. par déf.</th>
-              <th>Val. auto.</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>matricule</td>
-              <td>Matricule de la voiture</td>
-              <td>Texte</td>
-              <td>10</td>
-              <td>✔</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-            </tr>
-            <tr>
-              <td>vehicule</td>
-              <td>Marque de la voiture</td>
-              <td>Texte</td>
-              <td>32</td>
-              <td>✔</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-            </tr>
-            <tr>
-              <td>prix_unit</td>
-              <td>Prix de location pour une journée</td>
-              <td>Numérique réel</td>
-              <td>&nbsp;</td>
-              <td>✔</td>
-              <td>0.0</td>
-              <td>≥ 0.0</td>
-            </tr>
-            <tr>
-              <td>libre</td>
-              <td>Indique si le véhicule est disponible pour la locations</td>
-              <td>Texte</td>
-              <td>1</td>
-              <td>✔</td>
-              <td>"O"</td>
-              <td>"O" ou "F"</td>
-            </tr>
-            <tr>
-              <td>cin</td>
-              <td>Numéro de la carte d'identité du client</td>
-              <td>Texte</td>
-              <td>10</td>
-              <td>✔</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-            </tr>
-            <tr>
-              <td>client</td>
-              <td>Nom du client</td>
-              <td>Texte</td>
-              <td>32</td>
-              <td>✔</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-            </tr>
-            <tr>
-              <td>genre</td>
-              <td>Genre du client (Homme / Femme)</td>
-              <td>Texte</td>
-              <td>1</td>
-              <td>✔</td>
-              <td>"H"</td>
-              <td>"H" ou "F"</td>
-            </tr>
-            <tr>
-              <td>tel</td>
-              <td>Téléphone du client</td>
-              <td>Texte</td>
-              <td>16</td>
-              <td>✔</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-            </tr>
-            <tr>
-              <td>num_location</td>
-              <td>Numéro de location</td>
-              <td>Entier</td>
-              <td></td>
-              <td>✔</td>
-              <td>Auto incrémenté</td>
-              <td>&nbsp;</td>
-            </tr>
-            <tr>
-              <td>date_location</td>
-              <td>Date de location du véhicule</td>
-              <td>Date</td>
-              <td>&nbsp;</td>
-              <td>✔</td>
-              <td>Date du jour</td>
-              <td>&nbsp;</td>
-            </tr>
-            <tr>
-              <td>date_retour</td>
-              <td>Date de retour du véhicule</td>
-              <td>Date</td>
-              <td>&nbsp;</td>
-              <td>✔</td>
-              <td>&nbsp;</td>
-              <td>date_retour &gt; date_location</td>
-            </tr>
-            <tr>
-              <td>montant_location</td>
-              <td>Prix total de location du véhicule</td>
-              <td>Numérique réel</td>
-              <td>&nbsp;</td>
-              <td>✔</td>
-              <td>0.0</td>
-              <td>≥ 0.0</td>
-            </tr>
-          </tbody>
-        </table>
-        <p><strong>On demande de regrouper ces colonnes dans plusieurs entités distinctes.</strong></p>
-        <div class="my-1">
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 2"
-            v-on:click="nextQuestion(currentQuestion+1)">Question suivante</button>
+      <li>
+        <div class="question">
+          Créer la table <code>clients</code>.
+          <p>Les enregistrement de la table sont identifiés par la colonne <code>cin</code>.</p>
         </div>
+        <div class="query" data-typecontrol="textarea" data-rows="6" data-numquery="3"></div>
+        <pre class="userQuery">CREATE TABLE clients</pre>
+        <pre class="correctQuery">CREATE TABLE clients (
+  cin VARCHAR(10) PRIMARY KEY,
+  client VARCHAR(32) NOT NULL,
+  genre CHAR(1) NOT NULL DEFAULT 'M' CHECK(genre IN ('M', 'F')),
+  tel VARCHAR(16) NOT NULL
+);</pre>
       </li>
-      <li v-if="currentQuestion >= 3">Créer la table <code>vehicules</code>.
-        <p>Les enregistrement de la table sont identifiés par la colonne <code>matricule</code>.</p>
-        <div class="my-1">
-          <textarea cols="30" rows="10" class="form-control" v-model="queries[3]"></textarea>
+      <li>
+        <div class="question">
+          Créer la table <code>locations</code>.
+          <p>Les enregistrement de la table sont identifiés par la colonne <code>num_location</code>.</p>
         </div>
-        <div class="my-1 text-danger" v-if="!isSuccessful[3]">{{connectMsg[3]}}</div>
-        <div class="my-1 text-success" v-if="isSuccessful[3]">{{connectMsg[3]}}</div>
-        <div class="my-1">
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 3 || !isSuccessful[3]"
-            v-on:click="executeQuery(3)">Exécuter la requête</button>
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 3"
-            v-on:click="nextQuestion(currentQuestion + 1)">Question suivante</button>
-        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="16" data-numquery="4"></div>
+        <pre class="userQuery">CREATE TABLE locations</pre>
+        <pre class="correctQuery">CREATE TABLE locations (
+  num_location INT PRIMARY KEY AUTO_INCREMENT,
+  matricule VARCHAR(10) NOT NULL,
+  cin VARCHAR(10) NOT NULL,
+  date_location DATE NOT NULL DEFAULT NOW(),
+  date_retour DATE NOT NULL CHECK(date_retour > date_location),
+  montant_location DOUBLE NOT NULL CHECK(montant_location >= 0.0),
+  CONSTRAINT fk_location_1 FOREIGN KEY (matricule)
+      REFERENCES vehicules (matricule)
+      ON UPDATE CASCADE
+      ON DELETE CASCADE,
+  CONSTRAINT fk_location_2 FOREIGN KEY (cin)
+      REFERENCES clients (cin)
+      ON UPDATE CASCADE
+      ON DELETE CASCADE
+);</pre>
       </li>
-      <li v-if="currentQuestion >= 4">Créer la table <code>clients</code>.
-        <p>La table <code>clients</code> est identifiée par la colonne <code>cin</code>.</p>
-        <div class="my-1">
-          <textarea cols="30" rows="10" class="form-control" v-model="queries[4]"></textarea>
+      <li>
+        <div class="question">Remplir la table <code>clients</code> par les données suivantes :
+          <pre style="font-size: 0.8em;"><code class="nohighlight">+----------+--------+-------+----------+
+| cin      | client | genre | tel      |
++----------+--------+-------+----------+
+| 02500463 | Hajer  | F     | 36079515 |
+| 03972583 | Amir   | M     | 36704253 |
+| 04202363 | Aziz   | M     | 70116709 |
++----------+--------+-------+----------+</code></pre>
         </div>
-        <div class="my-1 text-danger" v-if="!isSuccessful[4]">{{connectMsg[4]}}</div>
-        <div class="my-1 text-success" v-if="isSuccessful[4]">{{connectMsg[4]}}</div>
-        <div class="my-1">
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 4 || !isSuccessful[4]"
-            v-on:click="executeQuery(4)">Exécuter la requête</button>
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 4"
-            v-on:click="nextQuestion(currentQuestion + 1)">Question suivante</button>
-        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="4" data-numquery="5"></div>
+        <pre class="userQuery">INSERT INTO clients (cin, client, genre, tel)
+VALUES (...),
+    (...),
+    (...);</pre>
+        <pre class="correctQuery">INSERT INTO clients (cin, client, genre, tel)
+VALUES ('03972583', 'Amir', 'M', '36704253'),
+    ('04202363', 'Aziz', 'M', '70116709'),
+    ('02500463', 'Hajer', 'F', '36079515');</pre>
       </li>
-      <li v-if="currentQuestion >= 5">Créer la table <code>locations</code>.
-        <p>La table est identifiée par le champ <code>num_location</code>.</p>
-        <div class="my-1">
-          <textarea cols="30" rows="10" class="form-control" v-model="queries[5]"></textarea>
+      <li>
+        <div class="question">Remplir la table <code>vehicules</code> par les données suivantes :
+          <pre style="font-size: 0.8em;"><code class="nohighlight">+-----------+------------------+-----------+-------+
+| matricule | vehicule         | prix_unit | libre |
++-----------+------------------+-----------+-------+
+| 203TU8041 | Clio 4           |        60 | O     |
+| 204TU9333 | Seat IBIZA       |        60 | N     |
+| 205TU6551 | Seat IBIZA       |        60 | O     |
+| 205TU9334 | Clio 5           |        70 | N     |
+| 206TU5473 | Suzuki Swift-BVA |        80 | O     |
+| 206TU9804 | Clio 4           |        60 | O     |
+| 207TU4480 | Suzuki Swift-BVA |        80 | O     |
+| 207TU8780 | Clio 5           |        70 | O     |
++-----------+------------------+-----------+-------+ </code></pre>
         </div>
-        <div class="my-1 text-danger" v-if="!isSuccessful[5]">{{connectMsg[5]}}</div>
-        <div class="my-1 text-success" v-if="isSuccessful[5]">{{connectMsg[5]}}</div>
-        <div class="my-1">
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 5 || !isSuccessful[5]"
-            v-on:click="executeQuery(5)">Exécuter la requête</button>
-          <button type="button" class="btn btn-primary" v-if="currentQuestion == 5"
-            v-on:click="nextQuestion(currentQuestion + 1)">Question suivante</button>
+        <div class="query" data-typecontrol="textarea" data-rows="11" data-numquery="6"></div>
+        <pre class="userQuery">INSERT INTO vehicules (matricule, vehicule, prix_unit, libre)
+VALUES (...),
+    (...),
+    ('203TU8041', 'Clio 4', 60, 'O'),
+    ('204TU9333', 'Seat IBIZA', 60, 'N'),
+    ('205TU6551', 'Seat IBIZA', 60, 'O'),
+    ('205TU9334', 'Clio 5', 70, 'N'),
+    ('206TU5473', 'Suzuki Swift-BVA', 80, 'O'),
+    ('206TU9804', 'Clio 4', 60, 'O'),
+    ('207TU4480', 'Suzuki Swift-BVA', 80, 'O'),
+    ('207TU8780', 'Clio 5', 70, 'O');</pre>
+        <pre class="correctQuery">INSERT INTO vehicules (matricule, vehicule, prix_unit, libre)
+VALUES ('200TU4906', 'Clio 4', 60, 'O'),
+    ('203TU4480', 'Suzuki Swift-BVA', 80, 'O'),
+    ('203TU8041', 'Clio 4', 60, 'O'),
+    ('204TU9333', 'Seat IBIZA', 60, 'N'),
+    ('205TU6551', 'Seat IBIZA', 60, 'O'),
+    ('205TU9334', 'Clio 5', 70, 'N'),
+    ('206TU5473', 'Suzuki Swift-BVA', 80, 'O'),
+    ('206TU9804', 'Clio 4', 60, 'O'),
+    ('207TU4480', 'Suzuki Swift-BVA', 80, 'O'),
+    ('207TU8780', 'Clio 5', 70, 'O');</pre>
+      </li>
+      <li>
+        <div class="question">Remplir la table <code>locations</code> par les données suivantes :
+          <pre style="font-size: 0.8em;"><code class="nohighlight">+--------------+-----------+----------+---------------+-------------+------------------+
+| num_location | matricule | cin      | date_location | date_retour | montant_location |
++--------------+-----------+----------+---------------+-------------+------------------+
+|            3 | 203TU8041 | 04202363 | 2022-01-05    | 2022-01-06  |               60 |
+|            4 | 203TU8041 | 03972583 | 2022-01-06    | 2022-01-09  |              180 |
+|            5 | 205TU6551 | 04202363 | 2022-01-07    | 2022-01-08  |               60 |
+|            6 | 206TU9804 | 04202363 | 2022-01-08    | 2022-01-26  |             1080 |
+|            7 | 207TU4480 | 04202363 | 2022-01-10    | 2022-01-12  |              160 |
+|            8 | 200TU4906 | 03972583 | 2022-01-13    | 2022-01-14  |               60 |
+|            9 | 204TU9333 | 03972583 | 2022-01-15    | 2022-01-16  |               60 |
+|           10 | 207TU4480 | 04202363 | 2022-01-18    | 2022-01-19  |               80 |
+|           11 | 206TU5473 | 04202363 | 2022-01-21    | 2022-01-22  |               80 |
+|           12 | 207TU4480 | 04202363 | 2022-01-24    | 2022-01-25  |               80 |
+|           13 | 205TU9334 | 04202363 | 2022-01-28    | 2022-02-03  |              420 |
+|           14 | 204TU9333 | 03972583 | 2022-01-28    | 2022-02-01  |              240 |
++--------------+-----------+----------+---------------+-------------+------------------+</code></pre>
         </div>
+        <div class="query" data-typecontrol="textarea" data-rows="15" data-numquery="7"></div>
+        <pre class="userQuery">INSERT INTO locations (num_location, matricule, cin, date_location, date_retour, montant_location)
+VALUES (...),
+    (2, '206TU5473', '04202363', '2022-01-02', '2022-01-03', 80),
+    (3, '203TU8041', '04202363', '2022-01-05', '2022-01-06', 60),
+    (4, '203TU8041', '03972583', '2022-01-06', '2022-01-09', 180),
+    (5, '205TU6551', '04202363', '2022-01-07', '2022-01-08', 60),
+    (6, '206TU9804', '04202363', '2022-01-08', '2022-01-26', 1080),
+    (7, '207TU4480', '04202363', '2022-01-10', '2022-01-12', 160),
+    (8, '200TU4906', '03972583', '2022-01-13', '2022-01-14', 60),
+    (9, '204TU9333', '03972583', '2022-01-15', '2022-01-16', 60),
+    (10, '207TU4480', '04202363', '2022-01-18', '2022-01-19', 80),
+    (11, '206TU5473', '04202363', '2022-01-21', '2022-01-22', 80),
+    (12, '207TU4480', '04202363', '2022-01-24', '2022-01-25', 80),
+    (13, '205TU9334', '04202363', '2022-01-28', '2022-02-03', 420),
+    (14,'204TU9333', '03972583', '2022-01-28', '2022-02-01', 240);</pre>
+      </li>
+      <pre class="correctQuery">INSERT INTO locations (num_location, matricule, cin, date_location, date_retour, montant_location)
+VALUES (1, '203TU4480', '03972583', '2022-01-02', '2022-01-03', 80),
+    (2, '206TU5473', '04202363', '2022-01-02', '2022-01-03', 80),
+    (3, '203TU8041', '04202363', '2022-01-05', '2022-01-06', 60),
+    (4, '203TU8041', '03972583', '2022-01-06', '2022-01-09', 180),
+    (5, '205TU6551', '04202363', '2022-01-07', '2022-01-08', 60),
+    (6, '206TU9804', '04202363', '2022-01-08', '2022-01-26', 1080),
+    (7, '207TU4480', '04202363', '2022-01-10', '2022-01-12', 160),
+    (8, '200TU4906', '03972583', '2022-01-13', '2022-01-14', 60),
+    (9, '204TU9333', '03972583', '2022-01-15', '2022-01-16', 60),
+    (10, '207TU4480', '04202363', '2022-01-18', '2022-01-19', 80),
+    (11, '206TU5473', '04202363', '2022-01-21', '2022-01-22', 80),
+    (12, '207TU4480', '04202363', '2022-01-24', '2022-01-25', 80),
+    (13, '205TU9334', '04202363', '2022-01-28', '2022-02-03', 420),
+    (14,'204TU9333', '03972583', '2022-01-28', '2022-02-01', 240);</pre>
+      </li>
+      <li>
+        <div class="question">Ajouter le nouveau client &laquo; Youssef &raquo; son <strong>cin</strong> est
+          &laquo; 12569800 &raquo; et son <b>téléphone</b> est &laquo; 52349157 &raquo;.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="2" data-numquery="8"></div>
+        <pre class="userQuery">INSERT INTO clients (cin, client, genre, tel)
+VALUES ('12569800', 'Youssef', 'M', 52349157);</pre>
+        <pre class="correctQuery">INSERT INTO clients (cin, client, genre, tel)
+VALUES ('12569800', 'Youssef', 'M', 52349157);</pre>
+      </li>
+      <li>
+        <div class="question">Le gérant a voulu insérer l'enregistrement suivant d'une nouvelle cliente
+          <code>(client: 'Assia', cin: '12650890', tel: '52349157')</code> en utilisant la commande suivante :
+          <pre><code class="sql">INSERT INTO clients (client, cin)
+VALUES ('Assia', '12650890');</code></pre>
+          <p>Mais il obtient l'erreur suivante :</p>
+          <pre><code class="nohighlight">ERROR 1364 (HY000): Field 'tel' doesn't have a default value</code></pre>
+          <p><strong>Quel est le problème ? Comment le corriger ?</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="2" data-numquery="9"></div>
+        <pre class="correctQuery">INSERT INTO clients (client, cin)
+VALUES ('Assia', '12650890');</pre>
+        <pre class="userQuery">INSERT INTO clients (client, cin)
+VALUES ('Assia', '12650890');</pre>
+      </li>
+      <li>
+        <div class="question">
+          Le gérant a corrigé sa commande en tapant :
+          <pre><code class="sql">INSERT INTO clients (client, cin, tel)
+VALUES ('Assia', '12650890', '52349157');</code></pre>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="2" data-numquery="10"></div>
+        <pre class="correctQuery">INSERT INTO clients (client, cin, tel)
+VALUES ('Assia', '12650890', '52349157');</pre>
+        <pre class="userQuery">INSERT INTO clients (client, cin, tel)
+  VALUES ('Assia', '12650890', '52349157');</pre>
+      </li>
+      <li>
+        <div class="question">
+          <p>Puis, pour vérifier qu'elle a été insérée :</p>
+          <pre><code class="sql">SELECT * FROM clients WHERE cin = '12650890';</code></pre>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="11"></div>
+        <pre class="correctQuery">SELECT * FROM clients WHERE cin = '12650890';</pre>
+        <pre class="userQuery">SELECT ...;</pre>
+      </li>
+      <li>
+        <div class="question">
+          <p><strong>Pourquoi le genre de &laquo; Assia &raquo; est-il incorrect ? Comment le corriger ?</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="12"></div>
+        <pre class="correctQuery">UPDATE clients SET genre = 'F' WHERE cin = '12650890';</pre>
+        <pre class="userQuery">UPDATE clients SET ...;</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste des clientes de cette agence par ordre croissant de leurs noms.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="13"></div>
+        <pre class="correctQuery">SELECT * FROM clients WHERE genre = 'F' ORDER BY client;</pre>
+        <pre class="userQuery">SELECT ...;</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste des clients qui disposent d'un numéro de téléphone Orange (commençant
+          par 5) ou Tunisie
+          Telecom (commençant par 7 ou 9).</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="14"></div>
+        <pre class="correctQuery">SELECT * FROM clients WHERE LEFT(tel, 1) IN ('5', '7', '9');</pre>
+        <pre class="userQuery">SELECT ...;</pre>
+      </li>
+      <li>
+        <div class="question">Le client &laquo; Aziz &raquo; vient de changer son numéro de téléphone à 25025637. Mettre
+          à jour les
+          informations de &laquo; Aziz &raquo;.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="15"></div>
+        <pre class="correctQuery">UPDATE clients SET tel = '25025637' WHERE cin = '04202363';</pre>
+        <pre class="userQuery">UPDATE clients SET ...;</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste des véhicules 'Clio 5' libres.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="16"></div>
+        <pre class="correctQuery">SELECT * FROM vehicules WHERE vehicule = 'Clio 5' AND libre = 'O';</pre>
+        <pre class="userQuery">SELECT ...;</pre>
+      </li>
+      <li>
+        <div class="question">
+          Ce véhicule a été loué à &laquo; Youssef &raquo; pendant 5 jours du 01/02/2022 au 06/02/2022.
+          <p><strong>Insérer cette location.</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="2" data-numquery="17"></div>
+        <pre class="correctQuery">INSERT INTO locations (matricule, cin, date_location, date_retour, montant_location)
+VALUES ('207TU8780', '12569800', '2022-02-01', '2022-02-06', 5 * 70.0);</pre>
+        <pre class="userQuery">INSERT INTO locations (...)
+  VALUES (...);</pre>
+      </li>
+      <li>
+        <div class="question">Mettre à jour la liste des véhicules.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="18"></div>
+        <pre class="correctQuery">UPDATE vehicules SET libre = 'N' WHERE matricule = '207TU8780';</pre>
+        <pre class="userQuery">UPDATE vehicules SET ...;</pre>
+      </li>
+      <li>
+        <div class="question"><strong>Vérifier que la location a été ajoutée.</strong></div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="19"></div>
+        <pre class="correctQuery">SELECT * FROM locations WHERE matricule = '207TU8780';</pre>
+        <pre class="userQuery">SELECT ...;</pre>
+      </li>
+      <li>
+        <div class="question"><strong>Vérifier que la véhicule n'est plus disponible.</strong></div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="20"></div>
+        <pre class="correctQuery">SELECT * FROM vehicules WHERE matricule = '207TU8780';</pre>
+        <pre class="userQuery">SELECT ...;</pre>
+      </li>
+      <li>
+        <div class="question">Oubliant que le véhicule &laquo; Seat IBIZA &raquo; ayant comme matricule &laquo;
+          204TU9333 &raquo; n'est pas libre. Le gérant l'a loué à &laquo; Assia &raquo;. Il a tapé la commande suivante
+          :
+          <pre><code class="sql">INSERT INTO locations (matricule, cin, date_location, date_retour, montant_location)
+VALUES ('204TU9333', '12650890', '2022-02-01', '2022-02-03', 2 * 60.0);</code></pre>
+          <p>Maintenant, il veut annuler cette location en supprimant cet enregistrement. <strong>Comment vas-t-il
+              procéder ?</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="2" data-numquery="21"></div>
+        <pre class="correctQuery">INSERT INTO locations (matricule, cin, date_location, date_retour, montant_location)
+VALUES ('204TU9333', '12650890', '2022-02-01', '2022-02-03', 2 * 60.0);</pre>
+        <pre class="userQuery">INSERT INTO locations (matricule, cin, date_location, date_retour, montant_location)
+  VALUES ('204TU9333', '12650890', '2022-02-01', '2022-02-03', 2 * 60.0);</pre>
+      <li>
+        <div class="question">Trouver le dernier <code>num_location</code> inséré dans la table <code>locations</code>.
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="22"></div>
+        <pre class="correctQuery">SELECT MAX(num_location) FROM locations;</pre>
+        <pre class="userQuery">SELECT ...;</pre>
+      </li>
+      <li>
+        <div class="question">Puis, supprimer l'enregistrement incorrect.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1" data-numquery="23"></div>
+        <pre class="correctQuery">DELETE FROM locations WHERE num_location = 16;</pre>
+        <pre class="userQuery">DELETE FROM locations ...;</pre>
+      </li>
       </li>
     </ol>
   </main>
   <script src="assets/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/highlight.min.js"></script>
   <script src="assets/js/vue.min.js"></script>
-  <script src="assets/apps/app02.js"></script>
+  <script src="assets/apps/app.js"></script>
 </body>
 
 </html>
