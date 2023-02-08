@@ -72,9 +72,9 @@
               v-html="msg[li.queryParams.numQuery]"></div>
             <div class="my-1">
               <button type="button" class="btn"
-                v-bind:class="{'btn-primary': executionCount[li.queryParams.numQuery] == 0, 'btn-secondary': executionCount[li.queryParams.numQuery] != 0}"
+                v-bind:class="{'btn-primary': executionCount[li.queryParams.numQuery] == 0, 'btn-secondary': executionCount[li.queryParams.numQuery] <= minExecCount, 'btn-success': executionCount[li.queryParams.numQuery] > minExecCount}"
                 v-on:click="executeQuery(li.queryParams.numQuery)">Exécuter
-                la requête [{{executionCount[li.queryParams.numQuery] + 1}}]</button>
+                la requête [{{executionCount[li.queryParams.numQuery]}}]</button>
             </div>
             <div class="my-1" v-if="executionCount[li.queryParams.numQuery] > minExecCount">
               <h3>Correction</h3>
@@ -293,6 +293,8 @@ VALUES ('03972583', 'Amir', 'M', '36704253'),
           <pre style="font-size: 0.8em;"><code class="nohighlight">+-----------+------------------+-----------+-------+
 | matricule | vehicule         | prix_unit | libre |
 +-----------+------------------+-----------+-------+
+| 200TU4906 | Clio 4           |        60 | O     |
+| 203TU4480 | Suzuki Swift-BVA |        80 | O     |
 | 203TU8041 | Clio 4           |        60 | O     |
 | 204TU9333 | Seat IBIZA       |        60 | N     |
 | 205TU6551 | Seat IBIZA       |        60 | O     |
@@ -332,6 +334,8 @@ VALUES ('200TU4906', 'Clio 4', 60, 'O'),
           <pre style="font-size: 0.8em;"><code class="nohighlight">+--------------+-----------+----------+---------------+-------------+------------------+
 | num_location | matricule | cin      | date_location | date_retour | montant_location |
 +--------------+-----------+----------+---------------+-------------+------------------+
+|            1 | 203TU4480 | 03972583 | 2022-01-02    | 2022-01-03  |               80 |
+|            2 | 206TU5473 | 04202363 | 2022-01-02    | 2022-01-03  |               80 |
 |            3 | 203TU8041 | 04202363 | 2022-01-05    | 2022-01-06  |               60 |
 |            4 | 203TU8041 | 03972583 | 2022-01-06    | 2022-01-09  |              180 |
 |            5 | 205TU6551 | 04202363 | 2022-01-07    | 2022-01-08  |               60 |
