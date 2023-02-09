@@ -5,9 +5,10 @@ const app = new Vue({
       host: '127.0.0.1',
       user: 'root',
       password: '',
-      dbName: 'location_vehicules',
+      dbName: 'bookshelf',
       dropAndCreateDatabase: false
     },
+    numTP: 3,
     minExecCount: 10,
     isConnected: false,
     allLi: [],
@@ -31,23 +32,23 @@ const app = new Vue({
   },
   methods: {
     saveConnectionSettings: function () {
-      window.localStorage.setItem("mysqlConnection", JSON.stringify(this.connectionSettings));
+      window.localStorage.setItem("mysqlConnection" + this.numTP, JSON.stringify(this.connectionSettings));
     },
     loadConnectionSettings: function () {
       const defaultSettings = {
         host: '127.0.0.1',
         user: 'root',
         password: '',
-        dbName: 'location_vehicules',
+        dbName: this.connectionSettings.dbName,
         dropAndCreateDatabase: false
       };
-      this.connectionSettings = JSON.parse(window.localStorage.getItem("mysqlConnection")) || defaultSettings;
+      this.connectionSettings = JSON.parse(window.localStorage.getItem("mysqlConnection" + this.numTP)) || defaultSettings;
     },
     saveAnswers: function () {
-      window.localStorage.setItem("userQueries", JSON.stringify(this.userQueries));
+      window.localStorage.setItem("userQueries" + this.numTP, JSON.stringify(this.userQueries));
     },
     loadAnswers: function () {
-      this.userQueries = JSON.parse(window.localStorage.getItem("userQueries")) || [];
+      this.userQueries = JSON.parse(window.localStorage.getItem("userQueries" + this.numTP)) || [];
     },
     resetAnswers: function () {
       this.userQueries = this.allLi.map(li => li.userQuery);

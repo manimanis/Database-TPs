@@ -556,8 +556,11 @@ VALUES ('204TU9333', '12650890', '2022-02-01', '2022-02-03', 2 * 60.0);</pre>
   </main>
   <script src="assets/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/highlight.min.js"></script>
+  <script>
+    document.querySelectorAll("#questions pre>code").forEach(block => hljs.highlightElement(block));
+  </script>
   <script src="assets/js/vue.min.js"></script>
-  <script src="assets/apps/app.js"></script>
+  <script src="assets/apps/app02.js"></script>
 </body>
 
 </html>

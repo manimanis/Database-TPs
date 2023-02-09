@@ -1,62 +1,99 @@
-const dbName = 'location_vehicules';
-const queries = [
-  '-- connect',
-  `CREATE DATABASE ${dbName};`,
-  '-- question théorique',
-  `CREATE TABLE vehicules (
-  matricule VARCHAR(10) PRIMARY KEY NOT NULL,
-  ...
-);`,
-  `CREATE TABLE clients (
-  cin VARCHAR(10) PRIMARY KEY,
-  ...
-);`,
-`CREATE TABLE locations (
-  num_location INT PRIMARY KEY AUTO_INCREMENT,
-  ...,
-  CONSTRAINT fk_location_1 FOREIGN KEY (matricule)
-      REFERENCES vehicules (matricule)
-      ON UPDATE CASCADE 
-      ON DELETE CASCADE,
-  CONSTRAINT fk_location_2 FOREIGN KEY (cin)
-      REFERENCES clients (cin)
-      ON UPDATE CASCADE 
-      ON DELETE CASCADE);`
-];
-const tp02 = new Vue({
+const app = new Vue({
   el: '#main',
   data: {
-    queries: queries,
-    currentQuestion: 0,
-    host: '127.0.0.1',
-    user: 'root',
-    password: '',
+    connectionSettings: {
+      host: '127.0.0.1',
+      user: 'root',
+      password: '',
+      dbName: 'location_vehicules',
+      dropAndCreateDatabase: false
+    },
+    minExecCount: 10,
     isConnected: false,
-    connectMsg: queries.map(q => ""),
-    isSuccessful: queries.map(q => false),
-    dbName: dbName
+    allLi: [],
+    currQuestion: 0,
+    executionCount: [],
+    msg: [],
+    isSuccess: [],
+    data: [],
+    queries: [],
+    userQueries: []
   },
   mounted: function () {
-    this.loadConnectionParams();
+    this.loadConnectionSettings();
+    this.loadAnswers();
+    this.prepareQuestions();
+    const url = new URL(window.location);
+    if (url.search.indexOf("correctAnswers") != -1) {
+      console.log("Correct answers loaded.");
+      this.loadCorrectAnswers();
+    }
   },
   methods: {
-    loadConnectionParams: function () {
-      const defaultConn = {
+    saveConnectionSettings: function () {
+      window.localStorage.setItem("mysqlConnection", JSON.stringify(this.connectionSettings));
+    },
+    loadConnectionSettings: function () {
+      const defaultSettings = {
         host: '127.0.0.1',
         user: 'root',
-        password: ''
+        password: '',
+        dbName: 'location_vehicules',
+        dropAndCreateDatabase: false
       };
-      const conn = JSON.parse(window.localStorage.getItem("mysql_connect")) || defaultConn;
-      this.host = conn.host;
-      this.user = conn.user;
-      this.password = conn.password;
+      this.connectionSettings = JSON.parse(window.localStorage.getItem("mysqlConnection")) || defaultSettings;
     },
-    saveConnectionParams: function () {
-      window.localStorage.setItem("mysql_connect", JSON.stringify({
-        host: this.host,
-        user: this.user,
-        password: this.password
-      }));
+    saveAnswers: function () {
+      window.localStorage.setItem("userQueries", JSON.stringify(this.userQueries));
+    },
+    loadAnswers: function () {
+      this.userQueries = JSON.parse(window.localStorage.getItem("userQueries")) || [];
+    },
+    resetAnswers: function () {
+      this.userQueries = this.allLi.map(li => li.userQuery);
+      this.saveAnswers();
+    },
+    loadCorrectAnswers: function () {
+      this.userQueries = this.allLi.map(li => li.correctQuery);
+      this.saveAnswers();
+    },
+    resetAnswersClicked: function () {
+      if (confirm("Voulez-vous supprimer toutes vos réponses ?")) {
+        this.resetAnswers();
+      }
+    },
+    prepareQuestions: function () {
+      this.allLi = [...document.querySelectorAll('#questions > li')];
+      this.allLi = this.allLi.map((li, idx) => {
+        const question = li.querySelector('.question')?.innerHTML;
+        const query = li.querySelector('.query');
+        const correctQuery = li.querySelector('.correctQuery')?.textContent;
+        const userQuery = li.querySelector('.userQuery')?.textContent;
+        const hasQuery = query != null;
+        const queryParams = [];
+        if (hasQuery) {
+          queryParams['type'] = query.dataset.typecontrol;
+          queryParams['rows'] = query.dataset.rows;
+          queryParams['numQuery'] = idx;
+          if (correctQuery) {
+            this.queries[queryParams['numQuery']] = correctQuery;
+          }
+          if (userQuery) {
+            this.userQueries[queryParams['numQuery']] = this.userQueries[queryParams['numQuery']] || userQuery;
+          }
+        }
+        return {
+          question: question,
+          hasQuery: hasQuery,
+          queryParams: queryParams,
+          correctQuery: correctQuery,
+          userQuery: userQuery
+        };
+      });
+      this.data = this.queries.map(_ => []);
+      this.msg = Array(this.allLi.length).fill("");
+      this.isSuccess = Array(this.allLi.length).fill(false);
+      this.executionCount = Array(this.queries.length).fill(0);
     },
     toFormData: function (obj) {
       const data = new FormData();
@@ -65,90 +102,63 @@ const tp02 = new Vue({
       }
       return data;
     },
-    connectToServer: function () {
-      let data = {
-        op: 'connect',
-        host: this.host,
-        user: this.user,
-        password: this.password
-      };
-      this.isSuccessful[0] = false;
-      fetch("query.php", {
+    sendQuery: function (numQuery, obj) {
+      this.isSuccess[numQuery] = false;
+      this.executionCount[numQuery]++;
+      this.saveAnswers();
+      return fetch("query.php", {
         method: "post",
         headers: {
           'Accept': 'application/json'
         },
-        body: this.toFormData(data)
+        body: this.toFormData(obj)
       })
         .then(response => response.json())
         .then(data => {
-          if (data["ok"] == false) {
-            this.connectMsg[0] = data["error"];
+          if (data.ok == false) {
+            this.msg[numQuery] = data.error;
           } else {
-            this.isSuccessful[0] = true;
-            this.connectMsg[0] = data["data"]
-            this.saveConnectionParams();
-            this.currentQuestion = 1;
+            this.isSuccess[numQuery] = true;
+            this.msg[numQuery] = data["message"].replace(/\\n/g, '<br>');
           }
+          this.data[numQuery] = data["data"];
+          this.$forceUpdate();
+          return data;
         });
     },
-    createDatabase: function () {
-      let data = {
-        op: 'create_db',
-        host: this.host,
-        user: this.user,
-        password: this.password,
-        dbName: this.dbName
-      };
-      this.isSuccessful[1] = false;
-      fetch("query.php", {
-        method: "post",
-        headers: {
-          'Accept': 'application/json'
-        },
-        body: this.toFormData(data)
-      })
-        .then(response => response.json())
+    connectToServer: function (numQuery) {
+      const data = { ...this.connectionSettings };
+      data["op"] = "connect";
+      this.isConnected = false;
+      this.sendQuery(numQuery, data)
         .then(data => {
-          if (data["ok"] == false) {
-            this.connectMsg[1] = data["error"];
-          } else {
-            this.isSuccessful[1] = true;
-            this.connectMsg[1] = data["data"]
-            this.currentQuestion = 2;
+          if (data.ok) {
+            this.saveConnectionSettings();
+            this.isConnected = true;
           }
         });
-    },
-    nextQuestion: function (numQuestion) {
-      this.currentQuestion = numQuestion;
     },
     executeQuery: function (numQuery) {
-      let data = {
-        op: 'query',
-        host: this.host,
-        user: this.user,
-        password: this.password,
-        dbName: this.dbName,
-        query: this.queries[numQuery]
-      };
-      this.isSuccessful[numQuery] = false;
-      fetch("query.php", {
-        method: "post",
-        headers: {
-          'Accept': 'application/json'
-        },
-        body: this.toFormData(data)
-      })
-        .then(response => response.json())
+      const data = { ...this.connectionSettings };
+      data["op"] = "query";
+      data["query"] = this.userQueries[numQuery];
+      this.sendQuery(numQuery, data)
         .then(data => {
-          if (data["ok"] == false) {
-            this.connectMsg[numQuery] = data["error"];
-          } else {
-            this.isSuccessful[numQuery] = true;
-            this.connectMsg[numQuery] = data["data"]
-          }
-          this.$forceUpdate();
+          // console.log(data);
         });
+    },
+    showQuestions: function (numQuestion) {
+      this.allLi.forEach((li, idx) => {
+        if (idx <= numQuestion) {
+          li.classList.remove("d-none");
+        } else {
+          li.classList.add("d-none");
+        }
+      });
+    },
+    nextQuestion: function () {
+      this.currQuestion = this.currQuestion + 1;
+      this.showQuestions(this.currQuestion);
     }
   }
 });
