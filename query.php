@@ -31,7 +31,9 @@ if ($op == "connect") {
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $data["message"] = "Connected to `" . $_POST["host"] . "`.";
         $dropDataBase = $_POST["dropAndCreateDatabase"] == 'true';
-        dropDatabase($conn, $_POST["dbName"]);
+        if ($dropDataBase) {
+            dropDatabase($conn, $_POST["dbName"]);
+        }
         if (!hasDatabase($conn, $_POST["dbName"])) {
             $rc = createDatabase($conn, $_POST["dbName"]);
             $data["message"] .= '\nCreating database `' . $_POST["dbName"] . "`.";

@@ -4,9 +4,9 @@ const app = new Vue({
     connectionSettings: {
       host: '127.0.0.1',
       user: 'root',
-      password: 'mysqlroot',
+      password: '',
       dbName: 'location_vehicules',
-      dropAndCreateDatabase: true
+      dropAndCreateDatabase: false
     },
     minExecCount: 10,
     isConnected: false,
@@ -20,12 +20,51 @@ const app = new Vue({
     userQueries: []
   },
   mounted: function () {
+    this.loadConnectionSettings();
+    this.loadAnswers();
     this.prepareQuestions();
+    const url = new URL(window.location);
+    if (url.search.indexOf("correctAnswers") != -1) {
+      console.log("Correct answers loaded.");
+      this.loadCorrectAnswers();
+    }
   },
   methods: {
+    saveConnectionSettings: function () {
+      window.localStorage.setItem("mysqlConnection", JSON.stringify(this.connectionSettings));
+    },
+    loadConnectionSettings: function () {
+      const defaultSettings = {
+        host: '127.0.0.1',
+        user: 'root',
+        password: '',
+        dbName: 'location_vehicules',
+        dropAndCreateDatabase: false
+      };
+      this.connectionSettings = JSON.parse(window.localStorage.getItem("mysqlConnection")) || defaultSettings;
+    },
+    saveAnswers: function () {
+      window.localStorage.setItem("userQueries", JSON.stringify(this.userQueries));
+    },
+    loadAnswers: function () {
+      this.userQueries = JSON.parse(window.localStorage.getItem("userQueries")) || [];
+    },
+    resetAnswers: function () {
+      this.userQueries = this.allLi.map(li => li.userQuery);
+      this.saveAnswers();
+    },
+    loadCorrectAnswers: function () {
+      this.userQueries = this.allLi.map(li => li.correctQuery);
+      this.saveAnswers();
+    },
+    resetAnswersClicked: function () {
+      if (confirm("Voulez-vous supprimer toutes vos réponses ?")) {
+        this.resetAnswers();
+      }
+    },
     prepareQuestions: function () {
       this.allLi = [...document.querySelectorAll('#questions > li')];
-      this.allLi = this.allLi.map(li => {
+      this.allLi = this.allLi.map((li, idx) => {
         const question = li.querySelector('.question')?.innerHTML;
         const query = li.querySelector('.query');
         const correctQuery = li.querySelector('.correctQuery')?.textContent;
@@ -35,12 +74,12 @@ const app = new Vue({
         if (hasQuery) {
           queryParams['type'] = query.dataset.typecontrol;
           queryParams['rows'] = query.dataset.rows;
-          queryParams['numQuery'] = +query.dataset.numquery;
+          queryParams['numQuery'] = idx;
           if (correctQuery) {
             this.queries[queryParams['numQuery']] = correctQuery;
           }
           if (userQuery) {
-            this.userQueries[queryParams['numQuery']] = userQuery;
+            this.userQueries[queryParams['numQuery']] = this.userQueries[queryParams['numQuery']] || userQuery;
           }
         }
         return {
@@ -66,6 +105,7 @@ const app = new Vue({
     sendQuery: function (numQuery, obj) {
       this.isSuccess[numQuery] = false;
       this.executionCount[numQuery]++;
+      this.saveAnswers();
       return fetch("query.php", {
         method: "post",
         headers: {
@@ -93,6 +133,7 @@ const app = new Vue({
       this.sendQuery(numQuery, data)
         .then(data => {
           if (data.ok) {
+            this.saveConnectionSettings();
             this.isConnected = true;
           }
         });
@@ -103,7 +144,7 @@ const app = new Vue({
       data["query"] = this.userQueries[numQuery];
       this.sendQuery(numQuery, data)
         .then(data => {
-          console.log(data);
+          // console.log(data);
         });
     },
     showQuestions: function (numQuestion) {
