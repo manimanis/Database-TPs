@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TP n°4</title>
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/css/default.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+  <main id="main" class="container">
+    <h1>TP n°4</h1>
+    <div class="my-1 connection-params" v-if="!isConnected" data-num-tp="4" data-base="cinema">
+      <div class="my-1"><strong>Connexion au serveur de base de données.</strong></div>
+      <div class="my-1">
+        <label for="server">Serveur</label>
+        <input type="text" id="serer" class="form-control" v-model="connectionSettings.host">
+      </div>
+      <div class="my-1">
+        <label for="user">Utilisateur</label>
+        <input type="text" class="form-control" v-model="connectionSettings.user" placeholder="aucun">
+      </div>
+      <div class="my-1">
+        <label for="server">Mot de passe</label>
+        <input type="password" class="form-control" v-model="connectionSettings.password" placeholder="aucun">
+      </div>
+      <div class="my-1">
+        <label for="server">Base de données</label>
+        <input type="text" class="form-control" v-model="connectionSettings.dbName" placeholder="aucun" readonly>
+      </div>
+      <div class="my-1">
+        <label><input type="checkbox" v-model="connectionSettings.dropAndCreateDatabase"> Supprimer et recréer la base
+          de données</label>
+      </div>
+      <div class="my-1">
+        <button type="button" class="btn btn-primary" v-on:click="connectToServer(0)">Connecter</button>
+        <button type="button" class="btn btn-danger" v-on:click="resetAnswersClicked()">Effacer les réponses...</button>
+      </div>
+      <div class="my-1 text-danger" v-if="!isSuccess[0]" v-html="msg[0]"></div>
+      <div class="my-1 text-success" v-if="isSuccess[0]" v-html="msg[0]"></div>
+    </div>
+
+    <div class="my-1" v-if="isConnected">
+      <ol>
+        <li v-for="li in allLi">
+          <div class="my-1" v-html="li.question"></div>
+          <template v-if="li.hasQuery">
+            <textarea v-if="li.queryParams.type = 'textarea'" class="form-control" cols="30"
+              v-bind:rows="li.queryParams.rows" v-model="userQueries[li.queryParams.numQuery]"></textarea>
+            <div class="my-1"
+              v-if="Array.isArray(data[li.queryParams.numQuery]) && data[li.queryParams.numQuery].length > 0">
+              <table class="table table-sm table-bordered table-striped border-dark">
+                <thead>
+                  <tr>
+                    <th v-for="column in Object.keys(data[li.queryParams.numQuery][0])">{{column}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in data[li.queryParams.numQuery]">
+                    <td v-for="col in Object.keys(row)">{{row[col]}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="my-1 text-danger" v-if="!isSuccess[li.queryParams.numQuery]"
+              v-html="msg[li.queryParams.numQuery]"></div>
+            <div class="my-1 text-success d-print-none" v-if="isSuccess[li.queryParams.numQuery]"
+              v-html="msg[li.queryParams.numQuery]"></div>
+            <div class="my-1 d-print-none">
+              <button type="button" class="btn"
+                v-bind:class="{'btn-primary': executionCount[li.queryParams.numQuery] == 0, 'btn-secondary': executionCount[li.queryParams.numQuery] > 0 && executionCount[li.queryParams.numQuery] <= minExecCount, 'btn-success': executionCount[li.queryParams.numQuery] > minExecCount}"
+                v-on:click="executeQuery(li.queryParams.numQuery)">Exécuter
+                la requête [{{executionCount[li.queryParams.numQuery]}}]</button>
+              <button type="button" class="btn btn-warning"
+                v-if="executionCount[li.queryParams.numQuery] > minExecCount && !showAnswer[li.queryParams.numQuery]"
+                v-on:click="showAnswerClicked(li.queryParams.numQuery)">Afficher la correction</button>
+            </div>
+            <div class="my-1 d-print-none" v-if="showAnswer[li.queryParams.numQuery]">
+              <h3>Correction</h3>
+              <pre
+                v-bind:id="'query-answer-'+li.queryParams.numQuery"><code class="sql" v-html="queries[li.queryParams.numQuery]"></code></pre>
+              <div class="my-1">
+                <button type="button" class="btn btn-info"
+                  v-if="queries[li.queryParams.numQuery] != userQueries[li.queryParams.numQuery]"
+                  v-on:click="pasteAnswerClicked(li.queryParams.numQuery)">Copier/Coller</button>
+              </div>
+            </div>
+          </template>
+        </li>
+      </ol>
+    </div>
+
+    <ol id="questions" class="d-none">
+      <li>
+        <div class="question">
+          <p>Soit la base de données <code>cinema</code> qui permet d'organiser la projection des films dans plusieurs
+            salles de cinéma.</p>
+          <blockquote class="blockquote">
+            <p>films(<u>numfilm</u>, titre, genre)</p>
+            <p>cinemas(<u>numcin</u>, nom, adresse)</p>
+            <p>projections(<u>numfilm#, numcin#, jour, heure</u>)</p>
+          </blockquote>
+          <p>On donne le dictionnaire de données suivants :</p>
+          <table class="table table-sm table-bordered table-striped border-dark dict-table mb-2">
+            <thead>
+              <tr>
+                <th>Colonne</th>
+                <th>Description</th>
+                <th>Type de données</th>
+                <th>Taille</th>
+                <th>Oblig.</th>
+                <th>Val. par déf.</th>
+                <th>Val. auto.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>numfilm</td>
+                <td>Numéro du film</td>
+                <td>Numérique Entier</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>titre</td>
+                <td>Titre du film</td>
+                <td>Texte</td>
+                <td>128</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>genre</td>
+                <td>Genre du film</td>
+                <td>Texte</td>
+                <td>32</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>numcin</td>
+                <td>Numéro du cinéma</td>
+                <td>Numérique Entier</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>nom</td>
+                <td>Nom du cinéma</td>
+                <td>Texte</td>
+                <td>64</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>adresse</td>
+                <td>Adresse du cinéma</td>
+                <td>Texte</td>
+                <td>128</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>jour</td>
+                <td>Jour de projection du film</td>
+                <td>Date</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>Date système</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>heure</td>
+                <td>Horaire de projection du film</td>
+                <td>Temps</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>Date système</td>
+                <td>&nbsp;</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>
+        <div class="question">Créer la table <code>films</code>.
+          <p>Les enregistrement de la table sont identifiés par la colonne <code>numfilm</code>.</p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="5"></div>
+        <pre class="correctQuery">CREATE TABLE films (
+    numfilm INT NOT NULL PRIMARY KEY,
+    titre VARCHAR(128) NOT NULL,
+    genre VARCHAR(32) NOT NULL
+);</pre>
+        <pre class="userQuery">CREATE TABLE films (
+    -- à compléter
+);</pre>
+      </li>
+      <li>
+        <div class="question">Créer la table <code>cinemas</code>.
+          <p>Les enregistrement de la table sont identifiés par la colonne <code>numcin</code>.</p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="5"></div>
+        <pre class="correctQuery">CREATE TABLE cinemas (
+    numcin INT NOT NULL PRIMARY KEY,
+    nom VARCHAR(64) NOT NULL,
+    adresse VARCHAR(128) NOT NULL
+);</pre>
+        <pre class="userQuery">CREATE TABLE cinemas (
+    -- à compléter
+);</pre>
+      </li>
+      <li>
+        <div class="question">Créer la table <code>projections</code> et établir les relations entre les tables.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="13"></div>
+        <pre class="correctQuery">CREATE TABLE projections (
+    numfilm INT NOT NULL,
+    numcin INT NOT NULL,
+    jour DATE DEFAULT NOW(),
+    heure TIME DEFAULT NOW(),
+    PRIMARY KEY(numfilm, numcin, jour, heure),
+    CONSTRAINT fk_projection1 FOREIGN KEY (numfilm)
+        REFERENCES films (numfilm)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_projection2 FOREIGN KEY (numcin)
+        REFERENCES cinemas (numcin)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);</pre>
+        <pre class="userQuery">CREATE TABLE projections (
+    -- à compléter
+);</pre>
+      </li>
+      <li>
+        <div class="question">Remplir la table <code>cinemas</code> avec les données suivantes :
+          <pre>+--------+------------------+--------------------+
+| numcin | nom              | adresse            |
++--------+------------------+--------------------+
+|     10 | CINEMADART       | Rue Hbib Bourguiba |
+|     20 | Ciné Jamil       | El Menzah 6        |
+|     30 | Cinéma l'empire  | Hammam-Lif         |
+|     40 | Rex              | La Goulette        |
++--------+------------------+--------------------+</pre>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="5"></div>
+        <pre class="correctQuery">INSERT INTO cinemas (numcin, nom, adresse)
+VALUES (10, 'CINEMADART', 'Rue Hbib Bourguiba'),
+    (20, 'Ciné Jamil', 'El Menzah 6'),
+    (30, 'Cinéma l''empire', 'Hammam-Lif'),
+    (40, 'Rex', 'La Goulette');</pre>
+        <pre class="userQuery">INSERT INTO cinemas (...)
+VALUES (...),
+    (20, 'Ciné Jamil', 'El Menzah 6'),
+    (30, 'Cinéma l''empire', 'Hammam-Lif'),
+    (40, 'Rex', 'La Goulette');</pre>
+      </li>
+      <li>
+        <div class="question">Remplir la table <code>films</code> avec les données suivantes :
+          <pre>+---------+---------------------------------+-----------------+
+| numfilm | titre                           | genre           |
++---------+---------------------------------+-----------------+
+|     300 | Les Schtroumpfs                 | BD              |
+|     400 | Matrix Reloaded                 | Science fiction |
+|     500 | Bienvenue à Marly-Gomont        | Comédie         |
+|     600 | Mr. Wolff                       | Action          |
+|     700 | Tempête de boulettes géantes    | BD              |
+|     800 | Les Croods 2: une nouvelle ère  | BD              |
++---------+---------------------------------+-----------------+</pre>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="7"></div>
+        <pre class="userQuery">INSERT INTO films (...)
+VALUES (...),
+    (400, 'Matrix Reloaded', 'Science fiction'),
+    (500, 'Bienvenue à Marly-Gomont', 'Comédie'),
+    (600, 'Mr. Wolff', 'Action'),
+    (700, 'Tempête de boulettes géantes', 'BD'),
+    (800, 'Les Croods 2: une nouvelle ère', 'BD');</pre>
+        <pre class="correctQuery">INSERT INTO films (numfilm, titre, genre)
+VALUES (300, 'Les Schtroumpfs', 'BD'),
+    (400, 'Matrix Reloaded', 'Science fiction'),
+    (500, 'Bienvenue à Marly-Gomont', 'Comédie'),
+    (600, 'Mr. Wolff', 'Action'),
+    (700, 'Tempête de boulettes géantes', 'BD'),
+    (800, 'Les Croods 2: une nouvelle ère', 'BD');</pre>
+      </li>
+      <li>
+        <div class="question">Remplir la table <code>projections</code> avec les données suivantes :
+          <pre>+---------+--------+------------+----------+
+| numfilm | numcin | jour       | heure    |
++---------+--------+------------+----------+
+|     300 |     10 | 2023-02-16 | 14:00:00 |
+|     300 |     10 | 2023-02-16 | 17:00:00 |
+|     300 |     10 | 2023-02-16 | 20:00:00 |
+|     300 |     10 | 2023-02-17 | 14:00:00 |
+|     300 |     10 | 2023-02-17 | 17:00:00 |
+|     300 |     10 | 2023-02-17 | 20:00:00 |
+|     400 |     10 | 2023-02-16 | 14:00:00 |
+|     400 |     10 | 2023-02-16 | 17:00:00 |
+|     400 |     10 | 2023-02-16 | 20:00:00 |
+|     400 |     20 | 2023-02-17 | 15:00:00 |
+|     400 |     20 | 2023-02-17 | 18:00:00 |
+|     400 |     20 | 2023-02-17 | 21:00:00 |
+|     500 |     20 | 2023-02-16 | 15:00:00 |
+|     500 |     20 | 2023-02-16 | 18:00:00 |
+|     500 |     20 | 2023-02-16 | 21:00:00 |
+|     500 |     20 | 2023-02-17 | 15:00:00 |
+|     500 |     20 | 2023-02-17 | 18:00:00 |
+|     500 |     20 | 2023-02-17 | 21:00:00 |
+|     600 |     20 | 2023-02-16 | 15:00:00 |
+|     600 |     20 | 2023-02-16 | 18:00:00 |
+|     600 |     20 | 2023-02-16 | 21:00:00 |
+|     600 |     30 | 2023-02-17 | 15:00:00 |
+|     600 |     30 | 2023-02-17 | 18:00:00 |
+|     600 |     30 | 2023-02-17 | 21:00:00 |
+|     700 |     30 | 2023-02-16 | 15:00:00 |
+|     700 |     30 | 2023-02-16 | 18:00:00 |
+|     700 |     30 | 2023-02-16 | 21:00:00 |
+|     700 |     30 | 2023-02-17 | 15:00:00 |
+|     700 |     30 | 2023-02-17 | 18:00:00 |
+|     700 |     30 | 2023-02-17 | 21:00:00 |
+|     800 |     10 | 2023-02-17 | 14:00:00 |
+|     800 |     10 | 2023-02-17 | 17:00:00 |
+|     800 |     10 | 2023-02-17 | 20:00:00 |
+|     800 |     30 | 2023-02-16 | 15:00:00 |
+|     800 |     30 | 2023-02-16 | 18:00:00 |
+|     800 |     30 | 2023-02-16 | 21:00:00 |
++---------+--------+------------+----------+</pre>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="8"></div>
+        <pre class="userQuery">INSERT INTO projections (...)
+VALUES (...),
+    (300, 10, '2023-02-16', '17:00'),
+    (300, 10, '2023-02-16', '20:00'),
+    (400, 10, '2023-02-16', '14:00'),
+    (400, 10, '2023-02-16', '17:00'),
+    (400, 10, '2023-02-16', '20:00'),
+    (500, 20, '2023-02-16', '15:00'),
+    (500, 20, '2023-02-16', '18:00'),
+    (500, 20, '2023-02-16', '21:00'),
+    (600, 20, '2023-02-16', '15:00'),
+    (600, 20, '2023-02-16', '18:00'),
+    (600, 20, '2023-02-16', '21:00'),
+    (700, 30, '2023-02-16', '15:00'),
+    (700, 30, '2023-02-16', '18:00'),
+    (700, 30, '2023-02-16', '21:00'),
+    (800, 30, '2023-02-16', '15:00'),
+    (800, 30, '2023-02-16', '18:00'),
+    (800, 30, '2023-02-16', '21:00'),
+    (800, 10, '2023-02-17', '14:00'),
+    (800, 10, '2023-02-17', '17:00'),
+    (800, 10, '2023-02-17', '20:00'),
+    (300, 10, '2023-02-17', '14:00'),
+    (300, 10, '2023-02-17', '17:00'),
+    (300, 10, '2023-02-17', '20:00'),
+    (400, 20, '2023-02-17', '15:00'),
+    (400, 20, '2023-02-17', '18:00'),
+    (400, 20, '2023-02-17', '21:00'),
+    (500, 20, '2023-02-17', '15:00'),
+    (500, 20, '2023-02-17', '18:00'),
+    (500, 20, '2023-02-17', '21:00'),
+    (600, 30, '2023-02-17', '15:00'),
+    (600, 30, '2023-02-17', '18:00'),
+    (600, 30, '2023-02-17', '21:00'),
+    (700, 30, '2023-02-17', '15:00'),
+    (700, 30, '2023-02-17', '18:00'),
+    (700, 30, '2023-02-17', '21:00');</pre>
+        <pre class="correctQuery">INSERT INTO projections (numfilm, numcin, jour, heure)
+VALUES (300, 10, '2023-02-16', '14:00'),
+    (300, 10, '2023-02-16', '17:00'),
+    (300, 10, '2023-02-16', '20:00'),
+    (400, 10, '2023-02-16', '14:00'),
+    (400, 10, '2023-02-16', '17:00'),
+    (400, 10, '2023-02-16', '20:00'),
+    (500, 20, '2023-02-16', '15:00'),
+    (500, 20, '2023-02-16', '18:00'),
+    (500, 20, '2023-02-16', '21:00'),
+    (600, 20, '2023-02-16', '15:00'),
+    (600, 20, '2023-02-16', '18:00'),
+    (600, 20, '2023-02-16', '21:00'),
+    (700, 30, '2023-02-16', '15:00'),
+    (700, 30, '2023-02-16', '18:00'),
+    (700, 30, '2023-02-16', '21:00'),
+    (800, 30, '2023-02-16', '15:00'),
+    (800, 30, '2023-02-16', '18:00'),
+    (800, 30, '2023-02-16', '21:00'),
+    (800, 10, '2023-02-17', '14:00'),
+    (800, 10, '2023-02-17', '17:00'),
+    (800, 10, '2023-02-17', '20:00'),
+    (300, 10, '2023-02-17', '14:00'),
+    (300, 10, '2023-02-17', '17:00'),
+    (300, 10, '2023-02-17', '20:00'),
+    (400, 20, '2023-02-17', '15:00'),
+    (400, 20, '2023-02-17', '18:00'),
+    (400, 20, '2023-02-17', '21:00'),
+    (500, 20, '2023-02-17', '15:00'),
+    (500, 20, '2023-02-17', '18:00'),
+    (500, 20, '2023-02-17', '21:00'),
+    (600, 30, '2023-02-17', '15:00'),
+    (600, 30, '2023-02-17', '18:00'),
+    (600, 30, '2023-02-17', '21:00'),
+    (700, 30, '2023-02-17', '15:00'),
+    (700, 30, '2023-02-17', '18:00'),
+    (700, 30, '2023-02-17', '21:00');</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste de tous les <code>films</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM films;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste de tous les <code>cinemas</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM cinemas;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher le nom et l'adresse du cinéma dont le <code>numcin</code> est <code>20</code>.
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM cinemas WHERE numcin = 20;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste de projections du cinéma ayant <code>20</code> comme
+          <code>numcin</code>.
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM projections WHERE numcin = 20;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Ce cinéma a annulé toutes projections de <code>15:00</code>.
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">DELETE FROM projections WHERE numcin = 20 AND heure = '15:00';</pre>
+        <pre class="userQuery">DELETE</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste de toutes projections du cinéma dont le <code>numcin</code> est
+          <code>20</code> pour le <code>16/02/2023</code>.
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM projections WHERE numcin = 20 AND jour = '2023-02-16';</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher les <code>numfilm</code> des films projetés dans le cinéma ayant
+          <code>numcin</code> égal à <code>20</code> sans redondances.
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre
+          class="correctQuery">SELECT DISTINCT numfilm FROM projections WHERE numcin = 20 AND jour = '2023-02-16';</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher le <code>titre</code> et le <code>genre</code> des films projetés ce jour là dans
+          ce cinéma.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM films WHERE numfilm IN (500, 600);</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher les films qui ont <code>BD</code> (Bandes dessinées) comme <code>genre</code>.
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM films WHERE genre = 'BD';</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher toutes les informations concernant la projection de ces films
+          <code>numfilm &in; {300, 700, 800}</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM projections WHERE numfilm IN (300, 700, 800);</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher le nombre de projections du film dont le <code>numfilm = 300</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT COUNT(*) FROM projections WHERE numfilm = 300;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la dernière heure de projection du film dont le <code>numfilm = 800</code> dans
+          le cinéma ayant <code>10</code> comme <code>numcin</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT MAX(heure) FROM projections WHERE numfilm = 800 AND numcin = 10;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste de projections du cinéma <code>REX</code> (<code>numcin = 40</code>).</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM projections WHERE numcin = 40;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste de tous les films.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM films;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Le cinéma <strong>REX</strong> a programmé trois projections pour le 17/02/2023.
+          <ul>
+            <li>à 17h le film 'Mr. Wolff'</li>
+            <li>à 17h le film 'Tempête de boulettes géantes'</li>
+            <li>à 21h le film 'Matrix Reloaded'</li>
+          </ul>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="4"></div>
+        <pre class="correctQuery">INSERT INTO projections (numcin, numfilm, jour, heure)
+VALUES (40, 600, '2023-02-17', '17:00'),
+    (40, 700, '2023-02-17', '17:00'),
+    (40, 400, '2023-02-17', '21:00');</pre>
+        <pre class="userQuery">INSERT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste de toutes les projections de films effectuées à 21h à partir du 17/02/2023.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM projections WHERE heure = '21:00' AND jour >= '2023-02-17';</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher le nombre de projections de films effectuées à 21h à partir du 17/02/2023.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT COUNT(*) FROM projections WHERE heure = '21:00' AND jour >= '2023-02-17';</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <!--
+<li>
+        <div class="question">Créer la table <code>films</code>.
+          <p>Les enregistrement de la table sont identifiés par la colonne <code>numfilm</code>.</p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="8"></div>
+        <pre class="correctQuery">CREATE TABLE films (
+    numfilm INT NOT NULL PRIMARY KEY,
+    titre VARCHAR(128) NOT NULL,
+    genre VARCHAR(32) NOT NULL
+);</pre>
+        <pre class="userQuery">CREATE TABLE films (
+    -- à compléter
+);</pre>
+      </li>  
+-->
+    </ol>
+  </main>
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/highlight.min.js"></script>
+  <script>
+    document.querySelectorAll("#questions pre>code").forEach(block => hljs.highlightElement(block));
+  </script>
+  <script src="assets/js/vue.min.js"></script>
+  <script src="assets/apps/app04.js"></script>
+</body>
+
+</html>
