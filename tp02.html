@@ -14,7 +14,7 @@
 <body>
   <main id="main" class="container">
     <h1>TP n°2</h1>
-    <div class="my-1" v-if="!isConnected">
+    <div class="my-1 connection-params" v-if="!isConnected" data-num-tp="2" data-base="location_vehicules">
       <div class="my-1"><strong>Connexion au serveur de base de données.</strong></div>
       <div class="my-1">
         <label for="server">Serveur</label>
@@ -75,10 +75,19 @@
                 v-bind:class="{'btn-primary': executionCount[li.queryParams.numQuery] == 0, 'btn-secondary': executionCount[li.queryParams.numQuery] > 0 && executionCount[li.queryParams.numQuery] <= minExecCount, 'btn-success': executionCount[li.queryParams.numQuery] > minExecCount}"
                 v-on:click="executeQuery(li.queryParams.numQuery)">Exécuter
                 la requête [{{executionCount[li.queryParams.numQuery]}}]</button>
+              <button type="button" class="btn btn-warning"
+                v-if="executionCount[li.queryParams.numQuery] > minExecCount && !showAnswer[li.queryParams.numQuery]"
+                v-on:click="showAnswerClicked(li.queryParams.numQuery)">Afficher la correction</button>
             </div>
-            <div class="my-1" v-if="executionCount[li.queryParams.numQuery] > minExecCount">
+            <div class="my-1 d-print-none" v-if="showAnswer[li.queryParams.numQuery]">
               <h3>Correction</h3>
-              <pre v-html="queries[li.queryParams.numQuery]"></pre>
+              <pre
+                v-bind:id="'query-answer-'+li.queryParams.numQuery"><code class="sql" v-html="queries[li.queryParams.numQuery]"></code></pre>
+              <div class="my-1">
+                <button type="button" class="btn btn-info"
+                  v-if="queries[li.queryParams.numQuery] != userQueries[li.queryParams.numQuery]"
+                  v-on:click="pasteAnswerClicked(li.queryParams.numQuery)">Copier/Coller</button>
+              </div>
             </div>
           </template>
         </li>
@@ -560,7 +569,7 @@ VALUES ('204TU9333', '12650890', '2022-02-01', '2022-02-03', 2 * 60.0);</pre>
     document.querySelectorAll("#questions pre>code").forEach(block => hljs.highlightElement(block));
   </script>
   <script src="assets/js/vue.min.js"></script>
-  <script src="assets/apps/app02.js"></script>
+  <script src="assets/apps/app04.js"></script>
 </body>
 
 </html>

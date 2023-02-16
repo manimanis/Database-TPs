@@ -1,3 +1,6 @@
+function randint(a, b) {
+  return Math.floor(a + Math.random() * (b - a + 1));
+}
 const app = new Vue({
   el: '#main',
   data: {
@@ -164,7 +167,35 @@ const app = new Vue({
         }
       });
     },
+    showChallenge: function (idx, count) {
+      const challenges = [
+        { op: '+', range: [1000, 9999] },
+        { op: '-', range: [1000, 9999] },
+        { op: '*', range: [1, 999] }
+      ];
+      const choice = randint(0, challenges.length - 1);
+      const a = randint(challenges[choice].range[0], challenges[choice].range[1]);
+      const b = randint(challenges[choice].range[0], challenges[choice].range[1]);
+      const op = challenges[choice].op;
+      const res = eval(`${a} ${op} ${b}`);
+      const choices = Array(4).fill(0).map(_ => {
+        const a = randint(challenges[choice].range[0], challenges[choice].range[1]);
+        const b = randint(challenges[choice].range[0], challenges[choice].range[1]);
+        return eval(`${a} ${op} ${b}`);
+      });
+      choices[randint(0, 3)] = res;
+      const msg = `Question ${idx+1}/${count}\nCombien font ${a} ${op} ${b}?\n${choices.join("\n")}`;
+      const ans = prompt(msg, '0');
+      return (ans == res);
+    },
+    showChallenges: function () {
+      return Array(2).fill(false).map((_, idx) => this.showChallenge(idx, 2)).every(ans => ans);
+    },
     showAnswerClicked: function (numQuery) {
+      if (!this.showChallenges()) {
+        alert("Non, c'est faux!");
+        return;
+      }
       this.showAnswer[numQuery] = true;
       this.$forceUpdate();
       setTimeout(() => {
