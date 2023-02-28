@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Devoir de contrôle</title>
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/css/default.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+  <main id="main" class="container">
+    <h1>Correction DC</h1>
+    <div class="my-1 connection-params" v-if="!isConnected" data-num-tp="5" data-base="eleves_classes">
+      <div class="my-1"><strong>Connexion au serveur de base de données.</strong></div>
+      <div class="my-1">
+        <label for="server">Serveur</label>
+        <input type="text" id="serer" class="form-control" v-model="connectionSettings.host">
+      </div>
+      <div class="my-1">
+        <label for="user">Utilisateur</label>
+        <input type="text" class="form-control" v-model="connectionSettings.user" placeholder="aucun">
+      </div>
+      <div class="my-1">
+        <label for="server">Mot de passe</label>
+        <input type="password" class="form-control" v-model="connectionSettings.password" placeholder="aucun">
+      </div>
+      <div class="my-1">
+        <label for="server">Base de données</label>
+        <input type="text" class="form-control" v-model="connectionSettings.dbName" placeholder="aucun" readonly>
+      </div>
+      <div class="my-1">
+        <label><input type="checkbox" v-model="connectionSettings.dropAndCreateDatabase"> Supprimer et recréer la base
+          de données</label>
+      </div>
+      <div class="my-1">
+        <button type="button" class="btn btn-primary" v-on:click="connectToServer(0)">Connecter</button>
+        <button type="button" class="btn btn-danger" v-on:click="resetAnswersClicked()">Effacer les réponses...</button>
+      </div>
+      <div class="my-1 text-danger" v-if="!isSuccess[0]" v-html="msg[0]"></div>
+      <div class="my-1 text-success" v-if="isSuccess[0]" v-html="msg[0]"></div>
+    </div>
+
+    <div class="my-1" v-if="isConnected">
+      <ol>
+        <li v-for="li in allLi">
+          <div class="my-1" v-html="li.question"></div>
+          <template v-if="li.hasQuery">
+            <textarea v-if="li.queryParams.type = 'textarea'" class="form-control" cols="30"
+              v-bind:rows="li.queryParams.rows" v-model="userQueries[li.queryParams.numQuery]"></textarea>
+            <div class="my-1"
+              v-if="Array.isArray(data[li.queryParams.numQuery]) && data[li.queryParams.numQuery].length > 0">
+              <table class="table table-sm table-bordered table-striped border-dark">
+                <thead>
+                  <tr>
+                    <th v-for="column in Object.keys(data[li.queryParams.numQuery][0])">{{column}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in data[li.queryParams.numQuery]">
+                    <td v-for="col in Object.keys(row)">{{row[col]}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="my-1 text-danger" v-if="!isSuccess[li.queryParams.numQuery]"
+              v-html="msg[li.queryParams.numQuery]"></div>
+            <div class="my-1 text-success d-print-none" v-if="isSuccess[li.queryParams.numQuery]"
+              v-html="msg[li.queryParams.numQuery]"></div>
+            <div class="my-1 d-print-none">
+              <button type="button" class="btn"
+                v-bind:class="{'btn-primary': executionCount[li.queryParams.numQuery] == 0, 'btn-secondary': executionCount[li.queryParams.numQuery] > 0 && executionCount[li.queryParams.numQuery] <= minExecCount, 'btn-success': executionCount[li.queryParams.numQuery] > minExecCount}"
+                v-on:click="executeQuery(li.queryParams.numQuery)">Exécuter
+                la requête [{{executionCount[li.queryParams.numQuery]}}]</button>
+              <button type="button" class="btn btn-warning"
+                v-if="executionCount[li.queryParams.numQuery] > minExecCount && !showAnswer[li.queryParams.numQuery]"
+                v-on:click="showAnswerClicked(li.queryParams.numQuery)">Afficher la correction</button>
+            </div>
+            <div class="my-1 d-print-none" v-if="showAnswer[li.queryParams.numQuery]">
+              <h3>Correction</h3>
+              <pre
+                v-bind:id="'query-answer-'+li.queryParams.numQuery"><code class="sql" v-html="queries[li.queryParams.numQuery]"></code></pre>
+              <div class="my-1">
+                <button type="button" class="btn btn-info"
+                  v-if="queries[li.queryParams.numQuery] != userQueries[li.queryParams.numQuery]"
+                  v-on:click="pasteAnswerClicked(li.queryParams.numQuery)">Copier/Coller</button>
+              </div>
+            </div>
+          </template>
+        </li>
+      </ol>
+    </div>
+
+    <ol id="questions" class="d-none">
+      <li>
+        <div class="question">
+          <p>Un enseignant désire enregistrer les noms de ses élèves dans une base de donnée. Il a commencé par définir
+            le schéma suivant :</p>
+          <blockquote class="blockquote">
+            <p>eleves(<u>ideleve</u>, nom, prenom)</p>
+            <p>classes(<u>idclasse</u>, libelle, annee)</p>
+            <p>eleves_classes(<u>#idclasse, #ideleve</u>)</p>
+          </blockquote>
+          <p>On donne le dictionnaire de données suivants :</p>
+          <table class="table table-sm table-bordered table-striped border-dark dict-table mb-2">
+            <thead>
+              <tr>
+                <th>Colonne</th>
+                <th>Description</th>
+                <th>Type de données</th>
+                <th>Taille</th>
+                <th>Oblig.</th>
+                <th>Val. par déf.</th>
+                <th>Val. auto.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ideleve</td>
+                <td>Identifiant de l’élève</td>
+                <td>Numérique Entier</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>nom</td>
+                <td>Nom de l’élève</td>
+                <td>Texte</td>
+                <td>32</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>prenom</td>
+                <td>Prénom de l’élève</td>
+                <td>Texte</td>
+                <td>32</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>idclasse</td>
+                <td>Identifiant classe</td>
+                <td>Numérique Entier</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>libelle</td>
+                <td>Libellé classe</td>
+                <td>Texte</td>
+                <td>16</td>
+                <td>✔</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>annee</td>
+                <td>Année scolaire</td>
+                <td>Numérique Entier</td>
+                <td>&nbsp;</td>
+                <td>✔</td>
+                <td>2023</td>
+                <td>&ge; 2020</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>
+        <div class="question">Créer la table <code>eleves</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="5"></div>
+        <pre class="correctQuery">CREATE TABLE eleves (
+    ideleve INT NOT NULL PRIMARY KEY,
+    nom VARCHAR(32) NOT NULL,
+    prenom VARCHAR(32) NOT NULL
+);</pre>
+        <pre class="userQuery">CREATE TABLE eleves</pre>
+      </li>
+      <li>
+        <div class="question">Créer la table <code>classes</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="5"></div>
+        <pre class="correctQuery">CREATE TABLE classes (
+    idclasse INT NOT NULL PRIMARY KEY,
+    libelle VARCHAR(16) NOT NULL,
+    annee INT NOT NULL DEFAULT 2023 CHECK(annee >= 2020)
+);</pre>
+        <pre class="userQuery">CREATE TABLE films (
+    -- à compléter
+);</pre>
+      </li>
+      <li>
+        <div class="question">Créer la table <code>eleves_classes</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="11"></div>
+        <pre class="correctQuery">CREATE TABLE eleves_classes (
+    idclasse INT NOT NULL,
+    ideleve INT NOT NULL,
+    PRIMARY KEY (idclasse, ideleve),
+    CONSTRAINT fk_eleves_classes1 FOREIGN KEY (idclasse)
+        REFERENCES classes (idclasse)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_eleves_classes2 FOREIGN KEY (ideleve)
+        REFERENCES eleves (ideleve)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);</pre>
+        <pre class="userQuery">CREATE TABLE eleves_classes (
+    idclasse INT NOT NULL,
+    ideleve INT NOT NULL,
+    PRIMARY KEY (idclasse, ideleve),
+    CONSTRAINT fk_eleves_classes1 FOREIGN KEY (idclasse)
+        REFERENCES classes (idclasse)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_eleves_classes2 FOREIGN KEY (ideleve)
+        REFERENCES eleves (ideleve)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);</pre>
+      </li>
+      <li>
+        <div class="question">Insérer les élèves suivants :
+          <table class="table table-sm table-bordered table-striped border-dark mb-2">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Année</th>
+                <th>Libellé</th>
+                <th>Ideleve</th>
+                <th>Idclasse</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"DAHMANE"</td>
+                <td>"Yassine"</td>
+                <td>2021</td>
+                <td>2TI</td>
+                <td>74206</td>
+                <td>86</td>
+              </tr>
+              <tr>
+                <td>"DAHMANE"</td>
+                <td>"Yassine"</td>
+                <td>2021</td>
+                <td>3STI</td>
+                <td>74206</td>
+                <td>76</td>
+              </tr>
+              <tr>
+                <td>"Abdjlil"</td>
+                <td>"Nour"</td>
+                <td>2021</td>
+                <td>2TI</td>
+                <td>6325</td>
+                <td>86</td>
+              </tr>
+              <tr>
+                <td>"Abdjlil"</td>
+                <td>"Nour"</td>
+                <td>2022</td>
+                <td>3STI</td>
+                <td>6325</td>
+                <td>76</td>
+              </tr>
+              <tr>
+                <td>"GAALOUL"</td>
+                <td>"Abrar"</td>
+                <td>2021</td>
+                <td>2TI</td>
+                <td>4206</td>
+                <td>86</td>
+              </tr>
+              <tr>
+                <td>"GAALOUL"</td>
+                <td>"Abrar"</td>
+                <td>2021</td>
+                <td>3STI</td>
+                <td>4206</td>
+                <td>76</td>
+              </tr>
+              <tr>
+                <td>"Mougou"</td>
+                <td>"Adem"</td>
+                <td>2021</td>
+                <td>2TI</td>
+                <td>325</td>
+                <td>86</td>
+              </tr>
+              <tr>
+                <td>"Mougou"</td>
+                <td>"Adem"</td>
+                <td>2021</td>
+                <td>3STI</td>
+                <td>325</td>
+                <td>76</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>
+        <div class="question">Insérer les classes dans la table <code>classes</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="3"></div>
+        <pre class="correctQuery">INSERT INTO classes (idclasse, libelle, annee)
+VALUES (86, '2TI', 2021),
+    (76, '3STI', 2022);</pre>
+        <pre class="userQuery">INSERT INTO classes</pre>
+      </li>
+      <li>
+        <div class="question">Insérer les élèves dans la table <code>eleves</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="5"></div>
+        <pre class="correctQuery">INSERT INTO eleves (ideleve, nom, prenom)
+VALUES (4206, 'GAALOUL', 'Abrar'),
+    (325, 'Mougou', 'Adem'),
+    (74206, 'DAHMANE', 'Yassine'),
+    (6325, 'Abdjlil', 'Nour');</pre>
+        <pre class="userQuery">INSERT INTO eleves (...)
+VALUES (...),
+    (...),
+    (74206, 'DAHMANE', 'Yassine'),
+    (6325, 'Abdjlil', 'Nour');</pre>
+      </li>
+      <li>
+        <div class="question">Insérer les données de la table <code>eleves_classes</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="9"></div>
+        <pre class="correctQuery">INSERT INTO eleves_classes (idclasse, ideleve)
+VALUES (86, 4206),
+    (76, 4206),
+    (86, 325),
+    (76, 325),
+    (86, 74206),
+    (76, 74206),
+    (86, 6325),
+    (76, 6325);</pre>
+        <pre class="userQuery">INSERT INTO eleves_classes (...)
+VALUES (...),
+    (...),
+    (86, 325),
+    (76, 325),
+    (86, 74206),
+    (76, 74206),
+    (86, 6325),
+    (76, 6325);</pre>
+      </li>
+      <li>
+        <div class="question">Insérer les données suivantes dans la table <code>classes</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="8"></div>
+        <pre class="correctQuery">INSERT INTO classes (idclasse, libelle, annee)
+VALUES (44, '2ECO1', 2021),
+    (45, '2ECO2', 2022),
+    (72, '3SC1', 2021),
+    (81, '3M1', 2022),
+    (73, '4ECO5', 2022),
+    (79, '4L1', 2021),
+    (80, '4M1', 2021);</pre>
+        <pre class="userQuery">INSERT INTO classes (idclasse, libelle, annee)
+VALUES (44, '2ECO1', 2021),
+    (45, '2ECO2', 2022),
+    (72, '3SC1', 2021),
+    (81, '3M1', 2022),
+    (73, '4ECO5', 2022),
+    (79, '4L1', 2021),
+    (80, '4M1', 2021);</pre>
+      </li>
+      <li>
+        <div class="question">Insérer les données suivantes dans la table <code>eleves</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="4"></div>
+        <pre class="correctQuery">INSERT INTO eleves (ideleve, nom, prenom)
+VALUES (1717, 'Ben Hlima', 'Assia'),
+    (6726, 'Toumi', 'Rawdha'),
+    (9444, 'Barhoumi', 'Ahmed');</pre>
+        <pre class="userQuery">INSERT INTO eleves (ideleve, nom, prenom)
+VALUES (1717, 'Ben Hlima', 'Assia'),
+    (6726, 'Toumi', 'Rawdha'),
+    (9444, 'Barhoumi', 'Ahmed');</pre>
+      </li>
+      <li>
+        <div class="question">Afficher toutes les classes.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM classes;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher les noms et les prénoms de tous les élèves.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT nom, prenom FROM eleves;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li> 
+      <li>
+        <div class="question">Afficher les classes ordonnées par ordre croissant du champ annee puis par libelle.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM classes ORDER BY annee, libelle;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher les noms et les prénoms des élèves par ordre alphabétique de leurs noms puis leurs prénoms.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM eleves ORDER BY nom, prenom;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher les classes correspondantes aux idclasse suivants : 81, 72, 44</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM classes WHERE idclasse IN (81, 72, 44);</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher les noms et les prénoms des élèves ayant les ideleve suivants : 6726, 9444, 1717</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM eleves WHERE ideleve IN (6726, 9444, 1717);</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste des élèves dont les noms commencent par la lettre B.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM eleves WHERE nom LIKE 'B%';</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste des classes en ordre décroissant de l’année et en ordre croissant du libellé.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM classes ORDER BY annee DESC, libelle;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste des classes quatrièmes, de l’année scolaire 2021.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM classes WHERE libelle LIKE '4%' AND annee = 2021;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste des classes deuxièmes, de l’année scolaire 2022.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT * FROM classes WHERE libelle LIKE '2%' AND annee = 2022;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher, en ordre croissant, la liste des idclasse dans lesquels l’élève ayant l’ideleve 74206 a étudié.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT idclasse FROM eleves_classes WHERE ideleve = 74206 ORDER BY idclasse;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <li>
+        <div class="question">Afficher la liste des ideleve qui font partie de la classe 2TI, en ordre croissant, à partir de la table eleves_classes.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
+        <pre class="correctQuery">SELECT ideleve FROM eleves_classes WHERE idclasse = 86 ORDER BY idclasse;</pre>
+        <pre class="userQuery">SELECT</pre>
+      </li>
+      <!--
+<li>
+        <div class="question">Créer la table <code>films</code>.
+          <p>Les enregistrement de la table sont identifiés par la colonne <code>numfilm</code>.</p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="8"></div>
+        <pre class="correctQuery">CREATE TABLE films (
+    numfilm INT NOT NULL PRIMARY KEY,
+    titre VARCHAR(128) NOT NULL,
+    genre VARCHAR(32) NOT NULL
+);</pre>
+        <pre class="userQuery">CREATE TABLE films (
+    -- à compléter
+);</pre>
+      </li>  
+-->
+    </ol>
+  </main>
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/highlight.min.js"></script>
+  <script>
+    document.querySelectorAll("#questions pre>code").forEach(block => hljs.highlightElement(block));
+  </script>
+  <script src="assets/js/vue.min.js"></script>
+  <script src="assets/apps/app04.js"></script>
+</body>
+
+</html>
