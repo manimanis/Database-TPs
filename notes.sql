@@ -7,22 +7,21 @@ USE notes;
 CREATE TABLE IF NOT EXISTS notes (
   ideleve INT NOT NULL,
   trim INT NOT NULL,
-  idmat INT NOT NULL,
   idex INT NOT NULL,
   note DOUBLE NOT NULL DEFAULT 0 CHECK(note >= 0 AND note <= 20),
   coef DOUBLE NOT NULL DEFAULT 1 CHECK(coef > 0),
-  PRIMARY KEY (ideleve, trim, idmat, idex)
+  PRIMARY KEY (ideleve, trim, idex)
 );
 
-INSERT INTO notes VALUES (1,1,1,1,0.5,1), 
-    (1,1,1,2,13.75,2), 
-    (1,2,1,1,4.5,1),
-    (1,2,1,2,0.75,2),
-    (2,1,1,1,10,1),
-    (2,1,1,2,19.5,2),
-    (2,2,1,1,19,1),
-    (2,2,1,2,1,2),
-    (3,2,1,2,13,2);
+INSERT INTO notes VALUES (1,1,1,0.5,1), 
+    (1,1,2,13.75,2), 
+    (1,2,1,4.5,1),
+    (1,2,2,0.75,2),
+    (2,1,1,10,1),
+    (2,1,2,19.5,2),
+    (2,2,1,19,1),
+    (2,2,2,1,2),
+    (3,2,2,13,2);
 
 --1
 SELECT COUNT(*) FROM notes;

@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TP n°3</title>
+  <title>TP n°5</title>
   <link rel="stylesheet" href="assets/css/bootstrap.min.css">
   <link rel="stylesheet" href="assets/css/default.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
@@ -13,7 +13,7 @@
 
 <body>
   <main id="main" class="container">
-    <h1>TP n°3</h1>
+    <h1>TP n°5</h1>
     <div class="my-1 connection-params" v-if="!isConnected" data-num-tp="6" data-base="notes">
       <div class="my-1"><strong>Connexion au serveur de base de données.</strong></div>
       <div class="my-1">
@@ -40,7 +40,7 @@
         <button type="button" class="btn btn-primary" v-on:click="connectToServer()">Connecter</button>
         <button type="button" class="btn btn-danger" v-on:click="resetAnswersClicked()">Effacer les réponses...</button>
       </div>
-      <div class="my-1 text-danger" v-if="!connectQuery.success" v-html="connectQuery.data?.message"></div>
+      <div class="my-1 text-danger" v-if="!connectQuery.success" v-html="connectQuery.data?.error"></div>
       <div class="my-1 text-success" v-if="connectQuery.success" v-html="connectQuery.data?.message"></div>
     </div>
 
@@ -61,117 +61,112 @@
               <button type="button" class="btn btn-warning" v-if="query.execCount > minExecCount && !query.showAns"
                 v-on:click="showAnswerClicked(query)">Afficher la correction</button>
             </div>
-            <div class="my-1 d-print-none" v-if="query.showAns">
-              <h3>Correction</h3>
-              <pre
-                v-bind:id="'query-answer-'+idxQs+'-'+idxQ"><code class="sql" v-html="query.correct"></code></pre>
-              <div class="my-1">
-                <button type="button" class="btn btn-info"
-                  v-if="query.answer != query.correct"
-                  v-on:click="pasteAnswerClicked(query)">Copier/Coller</button>
-              </div>
-            </div>
-          </div>
-
-          <!--
-          <template v-if="li.hasQuery">
-
-            <div class="my-1"
-              v-if="Array.isArray(data[li.queryParams.numQuery]) && data[li.queryParams.numQuery].length > 0">
+            <div class="my-1" v-if="hasData(query)">
               <table class="table table-sm table-bordered table-striped border-dark">
                 <thead>
                   <tr>
-                    <th v-for="column in Object.keys(data[li.queryParams.numQuery][0])">{{column}}</th>
+                    <th v-for="column in getColumns(query)">{{column}}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="row in data[li.queryParams.numQuery]">
+                  <tr v-for="row in getAllRows(query)">
                     <td v-for="col in Object.keys(row)">{{row[col]}}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-  
-            
-          </template>
-          -->
+            <div class="my-1 d-print-none" v-if="query.showAns">
+              <h3>Correction</h3>
+              <pre v-bind:id="'query-answer-'+idxQs+'-'+idxQ"><code class="sql" v-html="query.correct"></code></pre>
+              <div class="my-1">
+                <button type="button" class="btn btn-info" v-if="query.answer != query.correct"
+                  v-on:click="pasteAnswerClicked(query)">Copier/Coller</button>
+              </div>
+            </div>
+          </div>
         </li>
       </ol>
     </div>
 
 
     <div id="questions" class="d-none">
+
       <div class="question">
         <div class="description">
-          <p>La bibliothèque de Mondher est multi-lingues. Il veut créer une base de données lui facilitant la recherche
-            de ses livres.</p>
-          <p>Actuellement, Mondher a besoin des informations suivantes :</p>
-          <table class="table table-sm table-bordered table-striped border-dark dict-table mb-2">
+          <p>Soit la table <code>notes</code> suivante :</p>
+          <table class="table table-sm table-bordered table-striped border-dark mb-2 n5-col-eq">
             <thead>
               <tr>
-                <th>Colonne</th>
-                <th>Description</th>
-                <th>Type de données</th>
-                <th>Taille</th>
-                <th>Oblig.</th>
-                <th>Val. par déf.</th>
-                <th>Val. auto.</th>
+                <th>ideleve</th>
+                <th>trim</th>
+                <th>idex</th>
+                <th>note</th>
+                <th>coef</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>book_id</td>
-                <td>Numéro de série du livre</td>
-                <td>Numérique Entier</td>
-                <td>&nbsp;</td>
-                <td>✔</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
+                <td>1</td>
+                <td>1</td>
+                <td>1</td>
+                <td>0.5</td>
+                <td>1</td>
               </tr>
               <tr>
-                <td>title</td>
-                <td>Titre du livre</td>
-                <td>Texte</td>
-                <td>128</td>
-                <td>✔</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
+                <td>1</td>
+                <td>1</td>
+                <td>2</td>
+                <td>13.75</td>
+                <td>2</td>
               </tr>
               <tr>
-                <td>lang</td>
-                <td>Langue utilisée par le livre</td>
-                <td>Texte</td>
+                <td>1</td>
+                <td>2</td>
+                <td>1</td>
+                <td>4.5</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <td>1</td>
+                <td>2</td>
+                <td>2</td>
+                <td>0.75</td>
+                <td>2</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>1</td>
+                <td>1</td>
+                <td>10</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>1</td>
+                <td>2</td>
+                <td>19.5</td>
+                <td>2</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>2</td>
+                <td>1</td>
+                <td>19</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>2</td>
+                <td>2</td>
+                <td>1</td>
+                <td>2</td>
+              </tr>
+              <tr>
                 <td>3</td>
-                <td>✔</td>
-                <td>"ENG"</td>
-                <td>LONG(language) = 3</td>
-              </tr>
-              <tr>
-                <td>pages</td>
-                <td>Nombre de pages du livre</td>
-                <td>Numérique Entier</td>
-                <td>&nbsp;</td>
-                <td>✔</td>
-                <td>&nbsp;</td>
-                <td>&ge; 0</td>
-              </tr>
-              <tr>
-                <td>author_name</td>
-                <td>Nom du l'auteur</td>
-                <td>Texte</td>
-                <td>128</td>
-                <td>✔</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-              </tr>
-              <tr>
-                <td>pub_date</td>
-                <td>Date du publication du livre</td>
-                <td>Date</td>
-                <td>&nbsp;</td>
-                <td>✔</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
+                <td>2</td>
+                <td>2</td>
+                <td>13</td>
+                <td>2</td>
               </tr>
             </tbody>
           </table>
@@ -179,289 +174,129 @@
       </div>
       <div class="question">
         <div class="description">
-          Créer la table <code>books</code>.
-          <p>Les enregistrement de la table sont identifiés par la colonne <code>book_id</code>.</p>
+          Créer la table <code>notes</code>.
         </div>
-        <div class="query" data-typecontrol="textarea" data-rows="8">
-          <pre class="correct">CREATE TABLE books (
-  book_id INT PRIMARY KEY AUTO_INCREMENT,
-  title VARCHAR(128) NOT NULL,
-  lang VARCHAR(3) NOT NULL DEFAULT "ENG" CHECK(LENGTH(lang) = 3),
-  pages INT CHECK(pages > 0),
-  author_name VARCHAR(128),
-  pub_date DATE
+        <div class="query" data-typecontrol="textarea" data-rows="7">
+          <pre class="correct">CREATE TABLE IF NOT EXISTS notes (
+  ideleve INT NOT NULL,
+  trim INT NOT NULL,
+  idex INT NOT NULL,
+  note DOUBLE NOT NULL DEFAULT 0 CHECK(note >= 0 AND note <= 20),
+  coef DOUBLE NOT NULL DEFAULT 1 CHECK(coef > 0),
+  PRIMARY KEY (ideleve, trim, idex)
 );</pre>
-          <div class="user">CREATE TABLE books</div>
+          <div class="user">CREATE TABLE IF NOT EXISTS notes (
+  ideleve INT NOT NULL,
+  trim INT NOT NULL,
+  idex INT NOT NULL,
+  note DOUBLE NOT NULL DEFAULT 0 CHECK(note >= 0 AND note <= 20),
+  coef DOUBLE NOT NULL DEFAULT 1 CHECK(coef > 0),
+  PRIMARY KEY (ideleve, trim, idex)
+);</div>
         </div>
       </div>
-    </div>
-
-    <ol id="old-questions" class="d-none">
-      <li>
-        <div class="question">Remplir la table <code>books</code> par les données suivantes :
-          <pre style="font-size: 0.8em;"><code class="nohighlight">+---------+-------------------------+------+-------+----------------------------------+------------+
-| book_id | title                   | lang | pages | author_name                      | pub_date   |
-+---------+-------------------------+------+-------+----------------------------------+------------+
-|       1 | The Prophet             | ENG  |   127 | Jihad El                         | 2010-01-01 |
-|       2 | After the Funeral       | ENG  |   251 | Agatha Christie                  | 2001-07-02 |
-|       3 | Rage of Angels          | ENG  |   512 | Sidney Sheldon                   | 1999-08-03 |
-|       4 | Sacrament               | ENG  |   594 | Clive Barker                     | 1997-05-01 |
-|       5 | The Little House        | ENG  |   368 | Philippa Gregory                 | 1998-02-01 |
-|       6 | Scandalous Risks        | ENG  |   480 | Susan Howatch                    | 2009-07-22 |
-|       7 | Zelda's Cut             | ENG  |   432 | Philippa Gregory                 | 2001-02-01 |
-|       8 | Spares                  | ENG  |   317 | Michael Marshall Smith           | 1998-11-02 |
-|       9 | The Wise Woman          | ENG  |   640 | Philippa Gregory                 | 2002-02-01 |
-|      10 | Ocean Star Express      | ENG  |    32 | Mark Haddon                      | 2002-07-01 |
-|      11 | Image-Music-Text        | ENG  |   220 | Roland Barthes                   | 1993-09-13 |
-|      12 | The Annotated Hobbit    | ENG  |   411 | Douglas A. Anderson              | 2003-04-07 |
-|      13 | How to Be Alone         | ENG  |   306 | Jonathan Franzen                 | 2007-07-02 |
-|      14 | The Opposite of Fate    | ENG  |   398 | Amy Tan                          | 2004-07-01 |
-|      15 | Oh Say Can You Say?     | ENG  |    36 | Dr. Seuss                        | 2005-11-01 |
-|      16 | Microserfs              | ENG  |   371 | Douglas Coupland                 | 2008-01-01 |
-|      17 | Where Rainbows End      | ENG  |   454 | Cecelia Ahern                    | 2004-11-08 |
-|      18 | The Known World         | ENG  |   388 | Kevin R. Free                    | 2004-10-01 |
-|      19 | The Mandarins           | ENG  |   752 | Leonard M. Friedman              | 2005-05-03 |
-|      20 | Angela's Ashes          | ENG  |   224 | Frank McCourt                    | 1998-12-17 |
-|      21 | The Song of Rhiannon    | ENG  |   208 | Evangeline Walton                | 1992-09-01 |
-|      22 | Winter Cottage          | ENG  |   178 | Carol Ryrie Brink                | 1974-06-01 |
-|      23 | Seaward                 | ENG  |   167 | Susan Cooper                     | 1987-04-30 |
-|      24 | Reason in History       | ENG  |    95 | Georg Wilhelm Friedrich Hegel    | 1995-12-24 |
-|      25 | El plan infinito        | SPA  |   336 | Isabel Allende                   | 2002-05-14 |
-|      26 | The Museum of Dr. Moses | ENG  |   229 | Joyce Carol Oates                | 2007-08-06 |
-|      27 | Purgatorio              | ITA  |   704 | Dante Alighieri                  | 2004-04-08 |
-|      28 | La chute                | FRA  |   152 | Albert Camus                     | 1999-01-11 |
-|      29 | Ve  perro ¡Ve!          | SPA  |    24 | Adolfo Pérez Perdomo             | 2003-02-25 |
-|      30 | Boltzmon!               | ENG  |   160 | William Sleator                  | 1999-09-01 |
-|      31 | La Milla Verde          | SPA  |   448 | María Eugenia Ciocchini Suárez   | 2002-03-26 |
-|      32 | La Dernière Leçon       | FRA  |   209 | Mitch Albom                      | 2001-01-01 |
-|      33 | Un nuevo amanecer       | SPA  |   560 | Delia Mateovich                  | 2002-01-22 |
-|      34 | Por los pelos           | SPA  |   592 | Marian Keyes                     | 2002-09-17 |
-|      35 | 11 de Septiembre        | SPA  |   144 | Noam Chomsky                     | 2002-09-03 |
-|      36 | Le Royaume fantôme      | FRA  |   251 | Norton Juster                    | 2003-01-15 |
-|      37 | Ecstasy                 | FRA  |   358 | Alain Defossé                    | 2000-06-10 |
-|      38 | Adieu  Chunky Rice      | SPA  |   128 | Craig Thompson                   | 2002-06-20 |
-|      39 | Tiempo De Matar         | SPA  |    20 | John Grisham                     | 2003-07-01 |
-|      40 | El talismán             | SPA  |   375 | Peter Straub                     | 2003-07-01 |
-|      41 | Il genio dei numeri     | ITA  |   442 | Carlo Capararo                   | 2002-02-01 |
-|      42 | Piccole donne           | ITA  |   288 | Jame's Prunier                   | 2001-04-15 |
-|      43 | L'albero                | ITA  |    62 | Daniela Gamba                    | 2000-05-01 |
-|      44 | La regina dei dannati   | ITA  |   507 | Anne Rice                        | 1997-02-01 |
-+---------+-------------------------+------+-------+----------------------------------+------------+</code></pre>
+      
+      <div class="question">
+        <div class="description">Insérer les données dans la table <code>notes</code>.</div>
+        <div class="query" data-typecontrol="textarea" data-rows="9">
+          <div class="correct">INSERT INTO notes VALUES (1,1,1,0.5,1), 
+    (1,1,2,13.75,2), 
+    (1,2,1,4.5,1),
+    (1,2,2,0.75,2),
+    (2,1,1,10,1),
+    (2,1,2,19.5,2),
+    (2,2,1,19,1),
+    (2,2,2,1,2),
+    (3,2,2,13,2);</div>
+          <div class="user">INSERT INTO notes VALUES (1,1,1,0.5,1), 
+    (1,1,2,13.75,2), 
+    (1,2,1,4.5,1),
+    (1,2,2,0.75,2),
+    (2,1,1,10,1),
+    (2,1,2,19.5,2),
+    (2,2,1,19,1),
+    (2,2,2,1,2),
+    (3,2,2,13,2);</div>
         </div>
-        <div class="query" data-typecontrol="textarea" data-rows="45"></div>
-        <pre class="correctQuery">INSERT INTO books (book_id, title, lang, pages, author_name, pub_date)
-  VALUES ('1', 'The Prophet', 'ENG', '127', 'Jihad El', '2010-01-01'),
-  ('2', 'After the Funeral', 'ENG', '251', 'Agatha Christie', '2001-07-02'),
-  ('3', 'Rage of Angels', 'ENG', '512', 'Sidney Sheldon', '1999-08-03'),
-  ('4', 'Sacrament', 'ENG', '594', 'Clive Barker', '1997-05-01'),
-  ('5', 'The Little House', 'ENG', '368', 'Philippa Gregory', '1998-02-01'),
-  ('6', 'Scandalous Risks', 'ENG', '480', 'Susan Howatch', '2009-07-22'),
-  ('7', 'Zelda\'s Cut', 'ENG', '432', 'Philippa Gregory', '2001-02-01'),
-  ('8', 'Spares', 'ENG', '317', 'Michael Marshall Smith', '1998-11-02'),
-  ('9', 'The Wise Woman', 'ENG', '640', 'Philippa Gregory', '2002-02-01'),
-  ('10', 'Ocean Star Express', 'ENG', '32', 'Mark Haddon', '2002-07-01'),
-  ('11', 'Image-Music-Text', 'ENG', '220', 'Roland Barthes', '1993-09-13'),
-  ('12', 'The Annotated Hobbit', 'ENG', '411', 'Douglas A. Anderson', '2003-04-07'),
-  ('13', 'How to Be Alone', 'ENG', '306', 'Jonathan Franzen', '2007-07-02'),
-  ('14', 'The Opposite of Fate', 'ENG', '398', 'Amy Tan', '2004-07-01'),
-  ('15', 'Oh Say Can You Say?', 'ENG', '36', 'Dr. Seuss', '2005-11-01'),
-  ('16', 'Microserfs', 'ENG', '371', 'Douglas Coupland', '2008-01-01'),
-  ('17', 'Where Rainbows End', 'ENG', '454', 'Cecelia Ahern', '2004-11-08'),
-  ('18', 'The Known World', 'ENG', '388', 'Kevin R. Free', '2004-10-01'),
-  ('19', 'The Mandarins', 'ENG', '752', 'Leonard M. Friedman', '2005-05-03'),
-  ('20', 'Angela\'s Ashes', 'ENG', '224', 'Frank McCourt', '1998-12-17'),
-  ('21', 'The Song of Rhiannon', 'ENG', '208', 'Evangeline Walton', '1992-09-01'),
-  ('22', 'Winter Cottage', 'ENG', '178', 'Carol Ryrie Brink', '1974-06-01'),
-  ('23', 'Seaward', 'ENG', '167', 'Susan Cooper', '1987-04-30'),
-  ('24', 'Reason in History', 'ENG', '95', 'Georg Wilhelm Friedrich Hegel', '1995-12-24'),
-  ('25', 'El plan infinito', 'SPA', '336', 'Isabel Allende', '2002-05-14'),
-  ('26', 'The Museum of Dr. Moses', 'ENG', '229', 'Joyce Carol Oates', '2007-08-06'),
-  ('27', 'Purgatorio', 'ITA', '704', 'Dante Alighieri', '2004-04-08'),
-  ('28', 'La chute', 'FRA', '152', 'Albert Camus', '1999-01-11'),
-  ('29', 'Ve  perro ¡Ve!', 'SPA', '24', 'Adolfo Pérez Perdomo', '2003-02-25'),
-  ('30', 'Boltzmon!', 'ENG', '160', 'William Sleator', '1999-09-01'),
-  ('31', 'La Milla Verde', 'SPA', '448', 'María Eugenia Ciocchini Suárez', '2002-03-26'),
-  ('32', 'La Dernière Leçon', 'FRA', '209', 'Mitch Albom', '2001-01-01'),
-  ('33', 'Un nuevo amanecer', 'SPA', '560', 'Delia Mateovich', '2002-01-22'),
-  ('34', 'Por los pelos', 'SPA', '592', 'Marian Keyes', '2002-09-17'),
-  ('35', '11 de Septiembre', 'SPA', '144', 'Noam Chomsky', '2002-09-03'),
-  ('36', 'Le Royaume fantôme', 'FRA', '251', 'Norton Juster', '2003-01-15'),
-  ('37', 'Ecstasy', 'FRA', '358', 'Alain Defossé', '2000-06-10'),
-  ('38', 'Adieu  Chunky Rice', 'SPA', '128', 'Craig Thompson', '2002-06-20'),
-  ('39', 'Tiempo De Matar', 'SPA', '20', 'John Grisham', '2003-07-01'),
-  ('40', 'El talismán', 'SPA', '375', 'Peter Straub', '2003-07-01'),
-  ('41', 'Il genio dei numeri', 'ITA', '442', 'Carlo Capararo', '2002-02-01'),
-  ('42', 'Piccole donne', 'ITA', '288', 'Jame\'s Prunier', '2001-04-15'),
-  ('43', 'L\'albero', 'ITA', '62', 'Daniela Gamba', '2000-05-01'),
-  ('44', 'La regina dei dannati', 'ITA', '507', 'Anne Rice', '1997-02-01');</pre>
-        <pre class="userQuery">INSERT INTO books (book_id, title, lang, pages, author_name, pub_date)
-    VALUES (...),
-    (...),
-    ('3', 'Rage of Angels', 'ENG', '512', 'Sidney Sheldon', '1999-08-03'),
-    ('4', 'Sacrament', 'ENG', '594', 'Clive Barker', '1997-05-01'),
-    ('5', 'The Little House', 'ENG', '368', 'Philippa Gregory', '1998-02-01'),
-    ('6', 'Scandalous Risks', 'ENG', '480', 'Susan Howatch', '2009-07-22'),
-    ('7', 'Zelda\'s Cut', 'ENG', '432', 'Philippa Gregory', '2001-02-01'),
-    ('8', 'Spares', 'ENG', '317', 'Michael Marshall Smith', '1998-11-02'),
-    ('9', 'The Wise Woman', 'ENG', '640', 'Philippa Gregory', '2002-02-01'),
-    ('10', 'Ocean Star Express', 'ENG', '32', 'Mark Haddon', '2002-07-01'),
-    ('11', 'Image-Music-Text', 'ENG', '220', 'Roland Barthes', '1993-09-13'),
-    ('12', 'The Annotated Hobbit', 'ENG', '411', 'Douglas A. Anderson', '2003-04-07'),
-    ('13', 'How to Be Alone', 'ENG', '306', 'Jonathan Franzen', '2007-07-02'),
-    ('14', 'The Opposite of Fate', 'ENG', '398', 'Amy Tan', '2004-07-01'),
-    ('15', 'Oh Say Can You Say?', 'ENG', '36', 'Dr. Seuss', '2005-11-01'),
-    ('16', 'Microserfs', 'ENG', '371', 'Douglas Coupland', '2008-01-01'),
-    ('17', 'Where Rainbows End', 'ENG', '454', 'Cecelia Ahern', '2004-11-08'),
-    ('18', 'The Known World', 'ENG', '388', 'Kevin R. Free', '2004-10-01'),
-    ('19', 'The Mandarins', 'ENG', '752', 'Leonard M. Friedman', '2005-05-03'),
-    ('20', 'Angela\'s Ashes', 'ENG', '224', 'Frank McCourt', '1998-12-17'),
-    ('21', 'The Song of Rhiannon', 'ENG', '208', 'Evangeline Walton', '1992-09-01'),
-    ('22', 'Winter Cottage', 'ENG', '178', 'Carol Ryrie Brink', '1974-06-01'),
-    ('23', 'Seaward', 'ENG', '167', 'Susan Cooper', '1987-04-30'),
-    ('24', 'Reason in History', 'ENG', '95', 'Georg Wilhelm Friedrich Hegel', '1995-12-24'),
-    ('25', 'El plan infinito', 'SPA', '336', 'Isabel Allende', '2002-05-14'),
-    ('26', 'The Museum of Dr. Moses', 'ENG', '229', 'Joyce Carol Oates', '2007-08-06'),
-    ('27', 'Purgatorio', 'ITA', '704', 'Dante Alighieri', '2004-04-08'),
-    ('28', 'La chute', 'FRA', '152', 'Albert Camus', '1999-01-11'),
-    ('29', 'Ve  perro ¡Ve!', 'SPA', '24', 'Adolfo Pérez Perdomo', '2003-02-25'),
-    ('30', 'Boltzmon!', 'ENG', '160', 'William Sleator', '1999-09-01'),
-    ('31', 'La Milla Verde', 'SPA', '448', 'María Eugenia Ciocchini Suárez', '2002-03-26'),
-    ('32', 'La Dernière Leçon', 'FRA', '209', 'Mitch Albom', '2001-01-01'),
-    ('33', 'Un nuevo amanecer', 'SPA', '560', 'Delia Mateovich', '2002-01-22'),
-    ('34', 'Por los pelos', 'SPA', '592', 'Marian Keyes', '2002-09-17'),
-    ('35', '11 de Septiembre', 'SPA', '144', 'Noam Chomsky', '2002-09-03'),
-    ('36', 'Le Royaume fantôme', 'FRA', '251', 'Norton Juster', '2003-01-15'),
-    ('37', 'Ecstasy', 'FRA', '358', 'Alain Defossé', '2000-06-10'),
-    ('38', 'Adieu  Chunky Rice', 'SPA', '128', 'Craig Thompson', '2002-06-20'),
-    ('39', 'Tiempo De Matar', 'SPA', '20', 'John Grisham', '2003-07-01'),
-    ('40', 'El talismán', 'SPA', '375', 'Peter Straub', '2003-07-01'),
-    ('41', 'Il genio dei numeri', 'ITA', '442', 'Carlo Capararo', '2002-02-01'),
-    ('42', 'Piccole donne', 'ITA', '288', 'Jame\'s Prunier', '2001-04-15'),
-    ('43', 'L\'albero', 'ITA', '62', 'Daniela Gamba', '2000-05-01'),
-    ('44', 'La regina dei dannati', 'ITA', '507', 'Anne Rice', '1997-02-01');</pre>
-      </li>
-      <li>
         <div class="question">
-          Insérer les données suivantes :
-          <pre><code class="sql">INSERT INTO books (title, lang) VALUES ('MySQL', 'FR');</code></pre>
-          <strong>Que remarquez-vous ?</strong>
+          <div class="description">Afficher le nombre de lignes dans la table.</div>
+          <div class="query">
+            <div class="correct">SELECT COUNT(*) AS nbre_lignes FROM notes;</div>
+            <div class="user">SELECT</div>
+          </div>
         </div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">INSERT INTO books (title, lang) VALUES ('MySQL', 'FR');</pre>
-        <pre class="userQuery">INSERT INTO books (title, lang) VALUES ('MySQL', 'FR');</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste de tous les livres.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT * FROM books;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des cinq premiers livres de la liste.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT * FROM books LIMIT 5;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des cinq derniers livres de la liste sans les ordonner.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT * FROM books LIMIT 39, 5;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher les cinq livres les plus récents par ordre de leurs date de publication.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT * FROM books ORDER BY pub_date DESC LIMIT 5;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des livres en français (book_id, title, author_name).</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT book_id, title, author_name FROM books WHERE lang = 'FRA';</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher le livre français le plus vieux dans la collection (title, author_name,
-          pub_date).</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre
-          class="correctQuery">SELECT title, author_name, pub_date FROM books WHERE lang = 'FRA' ORDER BY pub_date LIMIT 1;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher les langues des livres sans répétitions.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT DISTINCT lang FROM books;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher les livres anglais par ordre alphabétique croissant du titre.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT * FROM books WHERE lang = 'ENG' ORDER BY title;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des livres anglais qui commencent par la lettre 's'. Ordonner le
-          résultat par ordre
-          décroissant de la date de publication.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="3"></div>
-        <pre class="correctQuery">SELECT * FROM books 
-WHERE lang = 'ENG' AND title LIKE 's%'
-ORDER BY pub_date DESC;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des livres écrits par l'auteur 'Philippa Gregory'.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="3"></div>
-        <pre class="correctQuery">SELECT * FROM books
-WHERE author_name = 'Philippa Gregory'
-ORDER BY pub_date DESC;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des livres qui comptent moins de 100 pages par ordre croissant du nombre
-          de pages.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="3"></div>
-        <pre class="correctQuery">SELECT * FROM books
-WHERE pages < 100
-ORDER BY pages;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste du top 5 des livres en fonction du nombre de pages.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="3"></div>
-        <pre class="correctQuery">SELECT * FROM books
-ORDER BY pages DESC
-LIMIT 5;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des années de publiation de tous les livres sans duplications.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT DISTINCT YEAR(pub_date) AS year FROM books ORDER BY year;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des livres publiés en 2003.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT * FROM books WHERE YEAR(pub_date) = 2003 ORDER BY pub_date;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des livres publiés dans la période [1974, 1995].</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre
-          class="correctQuery">SELECT * FROM books WHERE YEAR(pub_date) BETWEEN 1974 AND 1995 ORDER BY pub_date;</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-      <li>
-        <div class="question">Afficher la liste des livres italiens qui commencent par la lettre 'P' ou qui comptent
-          moins de 70 pages.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="1"></div>
-        <pre class="correctQuery">SELECT * FROM books WHERE lang = 'ITA' AND (title LIKE 'P%' OR pages < 70);</pre>
-        <pre class="userQuery">SELECT ...;</pre>
-      </li>
-    </ol>
+        <div class="question">
+          <div class="description">Afficher le nombre d’élèves.</div>
+          <div class="query">
+            <div class="correct">SELECT COUNT(DISTINCT ideleve) AS nbr_eleves FROM notes;</div>
+            <div class="user">SELECT</div>
+          </div>
+        </div>
+        <div class="question">
+          <div class="description">Afficher la note minimale et maximale.</div>
+          <div class="query" data-typecontrol="textarea" data-rows="2">
+            <div class="correct">SELECT MIN(note) AS mn, MAX(note) AS mx
+FROM notes;</div>
+            <div class="user">SELECT</div>
+          </div>
+        </div>
+        <!-- .question>.description+.query>.correct+.user -->
+        <div class="question">
+          <div class="description">Afficher la moyenne arithmétique des notes de l’élève numéro 1 en 1er trimestre.</div>
+          <div class="query" data-typecontrol="textarea" data-rows="3">
+            <div class="correct">SELECT AVG(note) as moyenne
+FROM notes
+WHERE trim = 1 AND ideleve = 1;</div>
+            <div class="user">SELECT</div>
+          </div>
+        </div>
+        <div class="question">
+          <div class="description">Afficher le nombre de notes au-dessus de la moyenne.</div>
+          <div class="query" data-typecontrol="textarea" data-rows="3">
+            <div class="correct">SELECT COUNT(note) AS nbr_notes
+FROM notes
+WHERE note >= 10;</div>
+            <div class="user">SELECT</div>
+          </div>
+        </div>
+        <div class="question">
+          <div class="description">Afficher le nombre de notes entre 8 et 10.</div>
+          <div class="query" data-typecontrol="textarea" data-rows="3">
+            <div class="correct">SELECT COUNT(note) AS nbr_notes
+FROM notes
+WHERE note BETWEEN 8 AND 10;</div>
+            <div class="user">SELECT</div>
+          </div>
+        </div>
+        <div class="question">
+          <div class="description">Afficher la somme des coefficients pour l’élève n°1 au 1er trimestre.</div>
+          <div class="query" data-typecontrol="textarea" data-rows="3">
+            <div class="correct">SELECT SUM(coef) AS som_coef
+FROM notes
+WHERE ideleve = 1 AND trim = 1;</div>
+            <div class="user">SELECT</div>
+          </div>
+        </div>
+        <div class="question">
+          <div class="description">Afficher le total de calcul de (note*coef) pour l’élève n°1 au 1er trimestre.</div>
+          <div class="query" data-typecontrol="textarea" data-rows="3">
+            <div class="correct">SELECT SUM(note * coef) AS somme
+FROM notes
+WHERE ideleve = 1 AND trim = 1;</div>
+            <div class="user">SELECT</div>
+          </div>
+        </div>
+        <div class="question">
+          <div class="description">Afficher la moyenne de l’élève n°1 au 1er trimestre.</div>
+          <div class="query" data-typecontrol="textarea" data-rows="3">
+            <div class="correct">SELECT SUM(note * coef) / SUM(coef) AS moyenne
+FROM notes
+WHERE ideleve = 1 AND trim = 1;</div>
+            <div class="user">SELECT</div>
+          </div>
+        </div>
+      </div>
+
   </main>
   <script src="assets/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/highlight.min.js"></script>

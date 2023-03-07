@@ -211,6 +211,15 @@ const app = new Vue({
     nextQuestion: function () {
       this.currQuestion = this.currQuestion + 1;
       this.showQuestions(this.currQuestion);
+    },
+    hasData: function (queryObj) {
+      return (queryObj.success && queryObj.data && queryObj.data.data && Array.isArray(queryObj.data.data) && queryObj.data.data.length > 0);
+    },
+    getColumns: function (queryObj) {
+      return Object.keys(queryObj.data.data[0]);
+    },
+    getAllRows: function (queryObj) {
+      return queryObj.data.data;
     }
   }
 });
