@@ -14,7 +14,7 @@
 <body>
   <main id="main" class="container">
     <h1>TP n°5</h1>
-    <div class="my-1 connection-params" v-if="!isConnected" data-num-tp="6" data-base="notes">
+    <div class="my-1 connection-params" v-if="!isConnected" data-num-tp="6" data-base="hopital">
       <div class="my-1"><strong>Connexion au serveur de base de données.</strong></div>
       <div class="my-1">
         <label for="server">Serveur</label>
@@ -56,8 +56,7 @@
             <div class="my-1 d-print-none">
               <button type="button" class="btn"
                 v-bind:class="{'btn-primary': query.execCount == 0, 'btn-secondary': query.execCount > 0 && query.execCount <= minExecCount, 'btn-success': query.execCount > minExecCount}"
-                v-on:click="executeQuery(query)">Exécuter
-                la requête [{{query.execCount}}]</button>
+                v-on:click="executeQuery(query)">Exécuter la requête [{{query.execCount}}]</button>
               <button type="button" class="btn btn-warning" v-if="query.execCount > minExecCount && !query.showAns"
                 v-on:click="showAnswerClicked(query)">Afficher la correction</button>
             </div>
@@ -93,210 +92,499 @@
 
       <div class="question">
         <div class="description">
-          <p>Soit la table <code>notes</code> suivante :</p>
-          <table class="table table-sm table-bordered table-striped border-dark mb-2 n5-col-eq">
-            <thead>
-              <tr>
-                <th>ideleve</th>
-                <th>trim</th>
-                <th>idex</th>
-                <th>note</th>
-                <th>coef</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>1</td>
-                <td>1</td>
-                <td>0.5</td>
-                <td>1</td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>1</td>
-                <td>2</td>
-                <td>13.75</td>
-                <td>2</td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>1</td>
-                <td>4.5</td>
-                <td>1</td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>2</td>
-                <td>0.75</td>
-                <td>2</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>1</td>
-                <td>1</td>
-                <td>10</td>
-                <td>1</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>1</td>
-                <td>2</td>
-                <td>19.5</td>
-                <td>2</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>2</td>
-                <td>1</td>
-                <td>19</td>
-                <td>1</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>2</td>
-                <td>2</td>
-                <td>1</td>
-                <td>2</td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>2</td>
-                <td>2</td>
-                <td>13</td>
-                <td>2</td>
-              </tr>
-            </tbody>
-          </table>
+          <p>Afin de gérer les hospitalisations des patients des différents services d'un hôpital, on se propose de
+            créer la base de données intitulée "Gestion_Hospitalisation" définie par le schéma relationnel simplifié
+            suivant:</p>
+          <blockquote>
+            <p><strong>service(<u>NumServ</u>, LibServ)</strong></p>
+            <p><strong>patient(<u>CodePat</u>, Nom, Prénom, DateNaiss, Mutuelle)</strong></p>
+            <p><strong>hospitalisation(<u>NumServ#, CodePat#, DateEntree</u>, DateSortie, Frais)</strong>
+            </p>
+          </blockquote>
         </div>
       </div>
       <div class="question">
         <div class="description">
-          Créer la table <code>notes</code>.
+          Créer la table <code>service</code>.
         </div>
-        <div class="query" data-typecontrol="textarea" data-rows="7">
-          <pre class="correct">CREATE TABLE IF NOT EXISTS notes (
-  ideleve INT NOT NULL,
-  trim INT NOT NULL,
-  idex INT NOT NULL,
-  note DOUBLE NOT NULL DEFAULT 0 CHECK(note >= 0 AND note <= 20),
-  coef DOUBLE NOT NULL DEFAULT 1 CHECK(coef > 0),
-  PRIMARY KEY (ideleve, trim, idex)
+        <div class="query" data-typecontrol="textarea" data-rows="4">
+          <pre class="correct">CREATE TABLE service (
+    NumServ INT NOT NULL PRIMARY KEY,
+    LibServ VARCHAR(32) NOT NULL
 );</pre>
-          <div class="user">CREATE TABLE IF NOT EXISTS notes (
-  ideleve INT NOT NULL,
-  trim INT NOT NULL,
-  idex INT NOT NULL,
-  note DOUBLE NOT NULL DEFAULT 0 CHECK(note >= 0 AND note <= 20),
-  coef DOUBLE NOT NULL DEFAULT 1 CHECK(coef > 0),
-  PRIMARY KEY (ideleve, trim, idex)
-);</div>
+          <pre class="user">CREATE TABLE service (
+  NumServ INT NOT NULL PRIMARY KEY,
+  LibServ VARCHAR(32) NOT NULL
+);</pre>
         </div>
       </div>
-      
       <div class="question">
-        <div class="description">Insérer les données dans la table <code>notes</code>.</div>
-        <div class="query" data-typecontrol="textarea" data-rows="9">
-          <div class="correct">INSERT INTO notes VALUES (1,1,1,0.5,1), 
-    (1,1,2,13.75,2), 
-    (1,2,1,4.5,1),
-    (1,2,2,0.75,2),
-    (2,1,1,10,1),
-    (2,1,2,19.5,2),
-    (2,2,1,19,1),
-    (2,2,2,1,2),
-    (3,2,2,13,2);</div>
-          <div class="user">INSERT INTO notes VALUES (1,1,1,0.5,1), 
-    (1,1,2,13.75,2), 
-    (1,2,1,4.5,1),
-    (1,2,2,0.75,2),
-    (2,1,1,10,1),
-    (2,1,2,19.5,2),
-    (2,2,1,19,1),
-    (2,2,2,1,2),
-    (3,2,2,13,2);</div>
+        <div class="description">
+          Créer la table <code>patient</code>.
         </div>
-        <div class="question">
-          <div class="description">Afficher le nombre de lignes dans la table.</div>
-          <div class="query">
-            <div class="correct">SELECT COUNT(*) AS nbre_lignes FROM notes;</div>
-            <div class="user">SELECT</div>
-          </div>
-        </div>
-        <div class="question">
-          <div class="description">Afficher le nombre d’élèves.</div>
-          <div class="query">
-            <div class="correct">SELECT COUNT(DISTINCT ideleve) AS nbr_eleves FROM notes;</div>
-            <div class="user">SELECT</div>
-          </div>
-        </div>
-        <div class="question">
-          <div class="description">Afficher la note minimale et maximale.</div>
-          <div class="query" data-typecontrol="textarea" data-rows="2">
-            <div class="correct">SELECT MIN(note) AS mn, MAX(note) AS mx
-FROM notes;</div>
-            <div class="user">SELECT</div>
-          </div>
-        </div>
-        <!-- .question>.description+.query>.correct+.user -->
-        <div class="question">
-          <div class="description">Afficher la moyenne arithmétique des notes de l’élève numéro 1 en 1er trimestre.</div>
-          <div class="query" data-typecontrol="textarea" data-rows="3">
-            <div class="correct">SELECT AVG(note) as moyenne
-FROM notes
-WHERE trim = 1 AND ideleve = 1;</div>
-            <div class="user">SELECT</div>
-          </div>
-        </div>
-        <div class="question">
-          <div class="description">Afficher le nombre de notes au-dessus de la moyenne.</div>
-          <div class="query" data-typecontrol="textarea" data-rows="3">
-            <div class="correct">SELECT COUNT(note) AS nbr_notes
-FROM notes
-WHERE note >= 10;</div>
-            <div class="user">SELECT</div>
-          </div>
-        </div>
-        <div class="question">
-          <div class="description">Afficher le nombre de notes entre 8 et 10.</div>
-          <div class="query" data-typecontrol="textarea" data-rows="3">
-            <div class="correct">SELECT COUNT(note) AS nbr_notes
-FROM notes
-WHERE note BETWEEN 8 AND 10;</div>
-            <div class="user">SELECT</div>
-          </div>
-        </div>
-        <div class="question">
-          <div class="description">Afficher la somme des coefficients pour l’élève n°1 au 1er trimestre.</div>
-          <div class="query" data-typecontrol="textarea" data-rows="3">
-            <div class="correct">SELECT SUM(coef) AS som_coef
-FROM notes
-WHERE ideleve = 1 AND trim = 1;</div>
-            <div class="user">SELECT</div>
-          </div>
-        </div>
-        <div class="question">
-          <div class="description">Afficher le total de calcul de (note*coef) pour l’élève n°1 au 1er trimestre.</div>
-          <div class="query" data-typecontrol="textarea" data-rows="3">
-            <div class="correct">SELECT SUM(note * coef) AS somme
-FROM notes
-WHERE ideleve = 1 AND trim = 1;</div>
-            <div class="user">SELECT</div>
-          </div>
-        </div>
-        <div class="question">
-          <div class="description">Afficher la moyenne de l’élève n°1 au 1er trimestre.</div>
-          <div class="query" data-typecontrol="textarea" data-rows="3">
-            <div class="correct">SELECT SUM(note * coef) / SUM(coef) AS moyenne
-FROM notes
-WHERE ideleve = 1 AND trim = 1;</div>
-            <div class="user">SELECT</div>
-          </div>
+        <div class="query" data-typecontrol="textarea" data-rows="8">
+          <pre class="correct">CREATE TABLE patient (
+    CodePat VARCHAR(6) NOT NULL PRIMARY KEY CHECK (LEFT(CodePat, 1) = 'P'),
+    Nom VARCHAR(64) NOT NULL,
+    Prenom VARCHAR(64) NOT NULL,
+    DateNaiss DATE,
+    Genre CHAR(1) NOT NULL DEFAULT 'M' CHECK(Genre IN ('M', 'F')),
+    Mutuelle BOOLEAN DEFAULT 0
+);</pre>
+          <pre class="user">CREATE TABLE patient (
+    CodePat VARCHAR(6) NOT NULL PRIMARY KEY CHECK (LEFT(CodePat, 1) = 'P'),
+    Nom VARCHAR(64) NOT NULL,
+    Prenom VARCHAR(64) NOT NULL,
+    DateNaiss DATE,
+    Genre CHAR(1) NOT NULL DEFAULT 'M' CHECK(Genre IN ('M', 'F')),
+    Mutuelle BOOLEAN DEFAULT 0
+);</pre>
         </div>
       </div>
-
+      <div class="question">
+        <div class="description">
+          Créer la table <code>hospitalisation</code>.
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="14">
+          <pre class="correct">CREATE TABLE hospitalisation (
+    NumServ INT NOT NULL,
+    CodePat VARCHAR(6) NOT NULL,
+    DateEntree DATE NOT NULL DEFAULT NOW(),
+    DateSortie DATE CHECK(DateSortie >= DateEntree OR DateSortie IS NULL),
+    Frais DOUBLE PRECISION NOT NULL DEFAULT 0 CHECK(Frais >= 0),
+    PRIMARY KEY (NumServ, CodePat, DateEntree),
+    FOREIGN KEY (NumServ) 
+        REFERENCES service (NumServ)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (CodePat)
+        REFERENCES patient (CodePat)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);</pre>
+          <pre class="user">CREATE TABLE hospitalisation (
+    NumServ INT NOT NULL,
+    CodePat VARCHAR(6) NOT NULL,
+    DateEntree DATE NOT NULL DEFAULT NOW(),
+    DateSortie DATE CHECK(DateSortie >= DateEntree OR DateSortie IS NULL),
+    Frais DOUBLE PRECISION NOT NULL DEFAULT 0 CHECK(Frais >= 0),
+    PRIMARY KEY (NumServ, CodePat, DateEntree),
+    FOREIGN KEY (NumServ) 
+        REFERENCES service (NumServ)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (CodePat)
+        REFERENCES patient (CodePat)
+        ON UPDATE CASCADE ON DELETE CASCADE
+)</pre>
+        </div>
+      </div>
+      <div class="question">
+        <div class="description">
+          Insérer les données suivantes dans la table <code>service</code>.
+          <pre><code class="nohighlight">+---------+-------------+
+| NumServ | LibServ     |
++---------+-------------+
+|      10 | Urgences    |
+|      20 | Cardiologie |
+|      30 | Chirurgie   |
+|      40 | Radiologie  |
+|      50 | Laboratoire |
++---------+-------------+</code></pre>
+          <p><strong>Compléter la requête suivante.</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="6">
+          <pre class="user">INSERT INTO ... (...)
+VALUES (...),
+    ('20','Cardiologie'),
+    ('30','Chirurgie'),
+    ('40','Radiologie'),
+    ('50','Laboratoire');</pre>
+          <pre class="correct">INSERT INTO service (NumServ, LibServ)
+VALUES ('10','Urgences'),
+    ('20','Cardiologie'),
+    ('30','Chirurgie'),
+    ('40','Radiologie'),
+    ('50','Laboratoire');</pre>
+        </div>
+      </div>
+      <div class="question">
+        <div class="description">
+          Insérer les données suivantes dans la table <code>patient</code>.
+          <pre><code class="nohighlight">+---------+-----------+--------+------------+-------+----------+
+| CodePat | Nom       | Prenom | DateNaiss  | Genre | Mutuelle |
++---------+-----------+--------+------------+-------+----------+
+| P13     | Dhieb     | Hamed  | 1965-07-21 | M     |        1 |
+| P16     | Karrout   | Hedia  | 2004-02-09 | F     |        1 |
++---------+-----------+--------+------------+-------+----------+</code></pre>
+          <p><strong>Compléter la requête suivante.</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="3">
+          <pre class="user">INSERT INTO ...;</pre>
+          <pre class="correct">INSERT INTO patient (CodePat, Nom, Prenom, Genre, DateNaiss, Mutuelle)
+VALUES ('P13','Dhieb','Hamed','M','1965-07-21','1'),
+    ('P16','Karrout','Hedia','F','2004-02-09','1');</pre>
+        </div>
+      </div>
+      <div class="question">
+        <div class="description">
+          Insérer les données suivantes dans la table <code>hospitalisation</code>.
+          <pre><code class="nohighlight">+---------+---------+------------+------------+-------+
+| NumServ | CodePat | DateEntree | DateSortie | Frais |
++---------+---------+------------+------------+-------+
+|      10 | P13     | 2021-06-28 | 2021-06-28 |   241 |
+|      10 | P16     | 2021-06-12 | 2021-06-12 |   894 |
++---------+---------+------------+------------+-------+</code></pre>
+          <p><strong>Compléter la requête suivante.</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="3">
+          <pre class="user">INSERT INTO ...;</pre>
+          <pre class="correct">INSERT INTO hospitalisation (NumServ, CodePat, DateEntree, DateSortie, Frais)
+VALUES ('10','P13','2021-06-28','2021-06-28','241.0'),
+    ('10','P16','2021-06-12','2021-06-12','894.0');</pre>
+        </div>
+      </div>
+      <div class="question">
+        <div class="description">
+          Insérer les données suivantes dans la table <code>patient</code>.
+          <p><strong>Exécuter simplement la requête suivante.</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="3">
+          <pre class="user">INSERT INTO patient (CodePat, Nom, Prenom, Genre, DateNaiss, Mutuelle)
+VALUES ('P19','Feki','Hichem','M','1950-07-23','0'),
+    ('P22','Ben Salem','Souha','F','2007-06-29','1'),
+    ('P25','Mejri','Sami','M','1985-06-16','0'),
+    ('P28','Badii','Mayssa','F','1991-10-16','1'),
+    ('P31','Ketari','Nabil','M','1984-04-11','1'),
+    ('P34','Hamdi','Radhia','F','2004-09-04','0'),
+    ('P37','Béji','Mejdi','M','1996-09-08','1'),
+    ('P40','Khalil','Bochra','F','1956-03-21','1');</pre>
+          <pre class="correct">INSERT INTO patient (CodePat, Nom, Prenom, Genre, DateNaiss, Mutuelle)
+VALUES ('P19','Feki','Hichem','M','1950-07-23','0'),
+    ('P22','Ben Salem','Souha','F','2007-06-29','1'),
+    ('P25','Mejri','Sami','M','1985-06-16','0'),
+    ('P28','Badii','Mayssa','F','1991-10-16','1'),
+    ('P31','Ketari','Nabil','M','1984-04-11','1'),
+    ('P34','Hamdi','Radhia','F','2004-09-04','0'),
+    ('P37','Béji','Mejdi','M','1996-09-08','1'),
+    ('P40','Khalil','Bochra','F','1956-03-21','1');</pre>
+        </div>
+      </div>
+      <div class="question">
+        <div class="description">
+          Insérer les données suivantes dans la table <code>hospitalisation</code>.
+          <p><strong>Exécuter simplement la requête suivante.</strong></p>
+        </div>
+        <div class="query" data-typecontrol="textarea" data-rows="3">
+          <pre class="user">INSERT INTO hospitalisation (NumServ, CodePat, DateEntree, DateSortie, Frais)
+VALUES ('30','P13','2021-06-29','2021-06-30','350.0'),
+	('40','P13','2021-06-29','2021-06-29','60.0'),
+	('50','P13','2021-06-29','2021-06-29','60.0'),
+	('30','P13','2021-08-21','2021-08-28','680.0'),
+	('40','P13','2021-08-21','2021-08-21','60.0'),
+	('50','P13','2021-08-21','2021-08-21','60.0'),
+	('40','P13','2021-08-23','2021-08-23','60.0'),
+	('50','P13','2021-08-23','2021-08-23','60.0'),
+	('40','P13','2021-08-24','2021-08-24','60.0'),
+	('50','P13','2021-08-24','2021-08-24','60.0'),
+	('40','P13','2021-08-25','2021-08-25','60.0'),
+	('50','P13','2021-08-25','2021-08-25','60.0'),
+	('40','P13','2021-08-27','2021-08-27','60.0'),
+	('50','P13','2021-08-27','2021-08-27','60.0'),
+	('30','P13','2021-08-29','2021-09-08','4290.0'),
+	('40','P13','2021-08-29','2021-08-29','60.0'),
+	('50','P13','2021-08-29','2021-08-29','60.0'),
+	('40','P13','2021-08-30','2021-08-30','60.0'),
+	('50','P13','2021-08-30','2021-08-30','60.0'),
+	('40','P13','2021-08-31','2021-08-31','60.0'),
+	('50','P13','2021-08-31','2021-08-31','60.0'),
+	('40','P13','2021-09-01','2021-09-01','60.0'),
+	('50','P13','2021-09-01','2021-09-01','60.0'),
+	('40','P13','2021-09-02','2021-09-02','60.0'),
+	('50','P13','2021-09-02','2021-09-02','60.0'),
+	('40','P13','2021-09-03','2021-09-03','60.0'),
+	('50','P13','2021-09-03','2021-09-03','60.0'),
+	('40','P13','2021-09-04','2021-09-04','60.0'),
+	('50','P13','2021-09-04','2021-09-04','60.0'),
+	('40','P13','2021-09-06','2021-09-06','60.0'),
+	('50','P13','2021-09-06','2021-09-06','60.0'),
+	('40','P13','2021-09-07','2021-09-07','60.0'),
+	('50','P13','2021-09-07','2021-09-07','60.0'),
+	('20','P16','2021-06-13','2021-06-17','1075.0'),
+	('40','P16','2021-06-13','2021-06-13','60.0'),
+	('50','P16','2021-06-13','2021-06-13','60.0'),
+	('40','P16','2021-06-14','2021-06-14','60.0'),
+	('50','P16','2021-06-14','2021-06-14','60.0'),
+	('20','P16','2021-06-24','2021-06-27','800.0'),
+	('40','P16','2021-06-26','2021-06-26','60.0'),
+	('50','P16','2021-06-26','2021-06-26','60.0'),
+	('10','P19','2021-03-18','2021-03-18','575.0'),
+	('10','P22','2021-02-10','2021-02-10','113.0'),
+	('20','P22','2021-02-11','2021-02-13','375.0'),
+	('40','P22','2021-02-11','2021-02-11','60.0'),
+	('50','P22','2021-02-11','2021-02-11','60.0'),
+	('40','P22','2021-02-12','2021-02-12','60.0'),
+	('50','P22','2021-02-12','2021-02-12','60.0'),
+	('20','P22','2021-03-05','2021-03-10','360.0'),
+	('40','P22','2021-03-05','2021-03-05','60.0'),
+	('50','P22','2021-03-05','2021-03-05','60.0'),
+	('40','P22','2021-03-06','2021-03-06','60.0'),
+	('50','P22','2021-03-06','2021-03-06','60.0'),
+	('40','P22','2021-03-09','2021-03-09','60.0'),
+	('50','P22','2021-03-09','2021-03-09','60.0'),
+	('10','P25','2021-01-06','2021-01-06','125.0'),
+	('10','P28','2021-01-01','2021-01-01','265.0'),
+	('30','P28','2021-01-02','2021-01-05','1620.0'),
+	('40','P28','2021-01-04','2021-01-04','60.0'),
+	('50','P28','2021-01-04','2021-01-04','60.0'),
+	('10','P31','2021-01-05','2021-01-05','36.0'),
+	('10','P34','2021-05-10','2021-05-10','553.0'),
+	('10','P37','2021-02-03','2021-02-03','80.0'),
+	('20','P37','2021-02-04','2021-02-14','3355.0'),
+	('40','P37','2021-02-05','2021-02-05','60.0'),
+	('50','P37','2021-02-05','2021-02-05','60.0'),
+	('40','P37','2021-02-07','2021-02-07','60.0'),
+	('50','P37','2021-02-07','2021-02-07','60.0'),
+	('40','P37','2021-02-09','2021-02-09','60.0'),
+	('50','P37','2021-02-09','2021-02-09','60.0'),
+	('40','P37','2021-02-10','2021-02-10','60.0'),
+	('50','P37','2021-02-10','2021-02-10','60.0'),
+	('40','P37','2021-02-13','2021-02-13','60.0'),
+	('50','P37','2021-02-13','2021-02-13','60.0'),
+	('20','P37','2021-05-02','2021-05-05','1360.0'),
+	('40','P37','2021-05-02','2021-05-02','60.0'),
+	('50','P37','2021-05-02','2021-05-02','60.0'),
+	('40','P37','2021-05-03','2021-05-03','60.0'),
+	('50','P37','2021-05-03','2021-05-03','60.0'),
+	('20','P37','2021-06-26','2021-06-29','200.0'),
+	('40','P37','2021-06-27','2021-06-27','60.0'),
+	('50','P37','2021-06-27','2021-06-27','60.0'),
+	('40','P37','2021-06-28','2021-06-28','60.0'),
+	('50','P37','2021-06-28','2021-06-28','60.0'),
+	('20','P37','2021-09-04','2021-09-06','315.0'),
+	('40','P37','2021-09-04','2021-09-04','60.0'),
+	('50','P37','2021-09-04','2021-09-04','60.0'),
+	('40','P37','2021-09-05','2021-09-05','60.0'),
+	('50','P37','2021-09-05','2021-09-05','60.0'),
+	('10','P40','2021-03-26','2021-03-26','50.0'),
+	('20','P40','2021-03-27','2021-03-27','310.0'),
+	('20','P40','2021-04-24','2021-05-02','1980.0'),
+	('40','P40','2021-04-25','2021-04-25','60.0'),
+	('50','P40','2021-04-25','2021-04-25','60.0'),
+	('40','P40','2021-04-26','2021-04-26','60.0'),
+	('50','P40','2021-04-26','2021-04-26','60.0'),
+	('40','P40','2021-04-27','2021-04-27','60.0'),
+	('50','P40','2021-04-27','2021-04-27','60.0'),
+	('40','P40','2021-05-01','2021-05-01','60.0'),
+	('50','P40','2021-05-01','2021-05-01','60.0'),
+	('20','P40','2021-05-22','2021-05-31','3800.0'),
+	('40','P40','2021-05-22','2021-05-22','60.0'),
+	('50','P40','2021-05-22','2021-05-22','60.0'),
+	('40','P40','2021-05-23','2021-05-23','60.0'),
+	('50','P40','2021-05-23','2021-05-23','60.0'),
+	('40','P40','2021-05-25','2021-05-25','60.0'),
+	('50','P40','2021-05-25','2021-05-25','60.0'),
+	('40','P40','2021-05-26','2021-05-26','60.0'),
+	('50','P40','2021-05-26','2021-05-26','60.0'),
+	('40','P40','2021-05-27','2021-05-27','60.0'),
+	('50','P40','2021-05-27','2021-05-27','60.0'),
+	('40','P40','2021-05-28','2021-05-28','60.0'),
+	('50','P40','2021-05-28','2021-05-28','60.0'),
+	('40','P40','2021-05-30','2021-05-30','60.0'),
+	('50','P40','2021-05-30','2021-05-30','60.0'),
+	('20','P40','2021-07-16','2021-07-25','900.0'),
+	('40','P40','2021-07-16','2021-07-16','60.0'),
+	('50','P40','2021-07-16','2021-07-16','60.0'),
+	('40','P40','2021-07-18','2021-07-18','60.0'),
+	('50','P40','2021-07-18','2021-07-18','60.0'),
+	('40','P40','2021-07-19','2021-07-19','60.0'),
+	('50','P40','2021-07-19','2021-07-19','60.0'),
+	('40','P40','2021-07-20','2021-07-20','60.0'),
+	('50','P40','2021-07-20','2021-07-20','60.0'),
+	('40','P40','2021-07-21','2021-07-21','60.0'),
+	('50','P40','2021-07-21','2021-07-21','60.0'),
+	('40','P40','2021-07-22','2021-07-22','60.0'),
+	('50','P40','2021-07-22','2021-07-22','60.0'),
+	('40','P40','2021-07-23','2021-07-23','60.0'),
+	('50','P40','2021-07-23','2021-07-23','60.0'),
+	('40','P40','2021-07-24','2021-07-24','60.0'),
+	('50','P40','2021-07-24','2021-07-24','60.0'),
+	('20','P40','2021-09-08','2021-09-15','3360.0'),
+	('40','P40','2021-09-08','2021-09-08','60.0'),
+	('50','P40','2021-09-08','2021-09-08','60.0'),
+	('40','P40','2021-09-09','2021-09-09','60.0'),
+	('50','P40','2021-09-09','2021-09-09','60.0'),
+	('40','P40','2021-09-11','2021-09-11','60.0'),
+	('50','P40','2021-09-11','2021-09-11','60.0'),
+	('40','P40','2021-09-12','2021-09-12','60.0'),
+	('50','P40','2021-09-12','2021-09-12','60.0'),
+	('40','P40','2021-09-13','2021-09-13','60.0'),
+	('50','P40','2021-09-13','2021-09-13','60.0'),
+	('40','P40','2021-09-14','2021-09-14','60.0'),
+	('50','P40','2021-09-14','2021-09-14','60.0'),
+	('20','P40','2021-12-04','2021-12-09','900.0'),
+	('40','P40','2021-12-04','2021-12-04','60.0'),
+	('50','P40','2021-12-04','2021-12-04','60.0'),
+	('40','P40','2021-12-06','2021-12-06','60.0'),
+	('50','P40','2021-12-06','2021-12-06','60.0'),
+	('40','P40','2021-12-07','2021-12-07','60.0'),
+	('50','P40','2021-12-07','2021-12-07','60.0'),
+	('40','P40','2021-12-08','2021-12-08','60.0'),
+	('50','P40','2021-12-08','2021-12-08','60.0');</pre>
+          <pre class="correct">INSERT INTO hospitalisation (NumServ, CodePat, DateEntree, DateSortie, Frais)
+VALUES ('30','P13','2021-06-29','2021-06-30','350.0'),
+	('40','P13','2021-06-29','2021-06-29','60.0'),
+	('50','P13','2021-06-29','2021-06-29','60.0'),
+	('30','P13','2021-08-21','2021-08-28','680.0'),
+	('40','P13','2021-08-21','2021-08-21','60.0'),
+	('50','P13','2021-08-21','2021-08-21','60.0'),
+	('40','P13','2021-08-23','2021-08-23','60.0'),
+	('50','P13','2021-08-23','2021-08-23','60.0'),
+	('40','P13','2021-08-24','2021-08-24','60.0'),
+	('50','P13','2021-08-24','2021-08-24','60.0'),
+	('40','P13','2021-08-25','2021-08-25','60.0'),
+	('50','P13','2021-08-25','2021-08-25','60.0'),
+	('40','P13','2021-08-27','2021-08-27','60.0'),
+	('50','P13','2021-08-27','2021-08-27','60.0'),
+	('30','P13','2021-08-29','2021-09-08','4290.0'),
+	('40','P13','2021-08-29','2021-08-29','60.0'),
+	('50','P13','2021-08-29','2021-08-29','60.0'),
+	('40','P13','2021-08-30','2021-08-30','60.0'),
+	('50','P13','2021-08-30','2021-08-30','60.0'),
+	('40','P13','2021-08-31','2021-08-31','60.0'),
+	('50','P13','2021-08-31','2021-08-31','60.0'),
+	('40','P13','2021-09-01','2021-09-01','60.0'),
+	('50','P13','2021-09-01','2021-09-01','60.0'),
+	('40','P13','2021-09-02','2021-09-02','60.0'),
+	('50','P13','2021-09-02','2021-09-02','60.0'),
+	('40','P13','2021-09-03','2021-09-03','60.0'),
+	('50','P13','2021-09-03','2021-09-03','60.0'),
+	('40','P13','2021-09-04','2021-09-04','60.0'),
+	('50','P13','2021-09-04','2021-09-04','60.0'),
+	('40','P13','2021-09-06','2021-09-06','60.0'),
+	('50','P13','2021-09-06','2021-09-06','60.0'),
+	('40','P13','2021-09-07','2021-09-07','60.0'),
+	('50','P13','2021-09-07','2021-09-07','60.0'),
+	('20','P16','2021-06-13','2021-06-17','1075.0'),
+	('40','P16','2021-06-13','2021-06-13','60.0'),
+	('50','P16','2021-06-13','2021-06-13','60.0'),
+	('40','P16','2021-06-14','2021-06-14','60.0'),
+	('50','P16','2021-06-14','2021-06-14','60.0'),
+	('20','P16','2021-06-24','2021-06-27','800.0'),
+	('40','P16','2021-06-26','2021-06-26','60.0'),
+	('50','P16','2021-06-26','2021-06-26','60.0'),
+	('10','P19','2021-03-18','2021-03-18','575.0'),
+	('10','P22','2021-02-10','2021-02-10','113.0'),
+	('20','P22','2021-02-11','2021-02-13','375.0'),
+	('40','P22','2021-02-11','2021-02-11','60.0'),
+	('50','P22','2021-02-11','2021-02-11','60.0'),
+	('40','P22','2021-02-12','2021-02-12','60.0'),
+	('50','P22','2021-02-12','2021-02-12','60.0'),
+	('20','P22','2021-03-05','2021-03-10','360.0'),
+	('40','P22','2021-03-05','2021-03-05','60.0'),
+	('50','P22','2021-03-05','2021-03-05','60.0'),
+	('40','P22','2021-03-06','2021-03-06','60.0'),
+	('50','P22','2021-03-06','2021-03-06','60.0'),
+	('40','P22','2021-03-09','2021-03-09','60.0'),
+	('50','P22','2021-03-09','2021-03-09','60.0'),
+	('10','P25','2021-01-06','2021-01-06','125.0'),
+	('10','P28','2021-01-01','2021-01-01','265.0'),
+	('30','P28','2021-01-02','2021-01-05','1620.0'),
+	('40','P28','2021-01-04','2021-01-04','60.0'),
+	('50','P28','2021-01-04','2021-01-04','60.0'),
+	('10','P31','2021-01-05','2021-01-05','36.0'),
+	('10','P34','2021-05-10','2021-05-10','553.0'),
+	('10','P37','2021-02-03','2021-02-03','80.0'),
+	('20','P37','2021-02-04','2021-02-14','3355.0'),
+	('40','P37','2021-02-05','2021-02-05','60.0'),
+	('50','P37','2021-02-05','2021-02-05','60.0'),
+	('40','P37','2021-02-07','2021-02-07','60.0'),
+	('50','P37','2021-02-07','2021-02-07','60.0'),
+	('40','P37','2021-02-09','2021-02-09','60.0'),
+	('50','P37','2021-02-09','2021-02-09','60.0'),
+	('40','P37','2021-02-10','2021-02-10','60.0'),
+	('50','P37','2021-02-10','2021-02-10','60.0'),
+	('40','P37','2021-02-13','2021-02-13','60.0'),
+	('50','P37','2021-02-13','2021-02-13','60.0'),
+	('20','P37','2021-05-02','2021-05-05','1360.0'),
+	('40','P37','2021-05-02','2021-05-02','60.0'),
+	('50','P37','2021-05-02','2021-05-02','60.0'),
+	('40','P37','2021-05-03','2021-05-03','60.0'),
+	('50','P37','2021-05-03','2021-05-03','60.0'),
+	('20','P37','2021-06-26','2021-06-29','200.0'),
+	('40','P37','2021-06-27','2021-06-27','60.0'),
+	('50','P37','2021-06-27','2021-06-27','60.0'),
+	('40','P37','2021-06-28','2021-06-28','60.0'),
+	('50','P37','2021-06-28','2021-06-28','60.0'),
+	('20','P37','2021-09-04','2021-09-06','315.0'),
+	('40','P37','2021-09-04','2021-09-04','60.0'),
+	('50','P37','2021-09-04','2021-09-04','60.0'),
+	('40','P37','2021-09-05','2021-09-05','60.0'),
+	('50','P37','2021-09-05','2021-09-05','60.0'),
+	('10','P40','2021-03-26','2021-03-26','50.0'),
+	('20','P40','2021-03-27','2021-03-27','310.0'),
+	('20','P40','2021-04-24','2021-05-02','1980.0'),
+	('40','P40','2021-04-25','2021-04-25','60.0'),
+	('50','P40','2021-04-25','2021-04-25','60.0'),
+	('40','P40','2021-04-26','2021-04-26','60.0'),
+	('50','P40','2021-04-26','2021-04-26','60.0'),
+	('40','P40','2021-04-27','2021-04-27','60.0'),
+	('50','P40','2021-04-27','2021-04-27','60.0'),
+	('40','P40','2021-05-01','2021-05-01','60.0'),
+	('50','P40','2021-05-01','2021-05-01','60.0'),
+	('20','P40','2021-05-22','2021-05-31','3800.0'),
+	('40','P40','2021-05-22','2021-05-22','60.0'),
+	('50','P40','2021-05-22','2021-05-22','60.0'),
+	('40','P40','2021-05-23','2021-05-23','60.0'),
+	('50','P40','2021-05-23','2021-05-23','60.0'),
+	('40','P40','2021-05-25','2021-05-25','60.0'),
+	('50','P40','2021-05-25','2021-05-25','60.0'),
+	('40','P40','2021-05-26','2021-05-26','60.0'),
+	('50','P40','2021-05-26','2021-05-26','60.0'),
+	('40','P40','2021-05-27','2021-05-27','60.0'),
+	('50','P40','2021-05-27','2021-05-27','60.0'),
+	('40','P40','2021-05-28','2021-05-28','60.0'),
+	('50','P40','2021-05-28','2021-05-28','60.0'),
+	('40','P40','2021-05-30','2021-05-30','60.0'),
+	('50','P40','2021-05-30','2021-05-30','60.0'),
+	('20','P40','2021-07-16','2021-07-25','900.0'),
+	('40','P40','2021-07-16','2021-07-16','60.0'),
+	('50','P40','2021-07-16','2021-07-16','60.0'),
+	('40','P40','2021-07-18','2021-07-18','60.0'),
+	('50','P40','2021-07-18','2021-07-18','60.0'),
+	('40','P40','2021-07-19','2021-07-19','60.0'),
+	('50','P40','2021-07-19','2021-07-19','60.0'),
+	('40','P40','2021-07-20','2021-07-20','60.0'),
+	('50','P40','2021-07-20','2021-07-20','60.0'),
+	('40','P40','2021-07-21','2021-07-21','60.0'),
+	('50','P40','2021-07-21','2021-07-21','60.0'),
+	('40','P40','2021-07-22','2021-07-22','60.0'),
+	('50','P40','2021-07-22','2021-07-22','60.0'),
+	('40','P40','2021-07-23','2021-07-23','60.0'),
+	('50','P40','2021-07-23','2021-07-23','60.0'),
+	('40','P40','2021-07-24','2021-07-24','60.0'),
+	('50','P40','2021-07-24','2021-07-24','60.0'),
+	('20','P40','2021-09-08','2021-09-15','3360.0'),
+	('40','P40','2021-09-08','2021-09-08','60.0'),
+	('50','P40','2021-09-08','2021-09-08','60.0'),
+	('40','P40','2021-09-09','2021-09-09','60.0'),
+	('50','P40','2021-09-09','2021-09-09','60.0'),
+	('40','P40','2021-09-11','2021-09-11','60.0'),
+	('50','P40','2021-09-11','2021-09-11','60.0'),
+	('40','P40','2021-09-12','2021-09-12','60.0'),
+	('50','P40','2021-09-12','2021-09-12','60.0'),
+	('40','P40','2021-09-13','2021-09-13','60.0'),
+	('50','P40','2021-09-13','2021-09-13','60.0'),
+	('40','P40','2021-09-14','2021-09-14','60.0'),
+	('50','P40','2021-09-14','2021-09-14','60.0'),
+	('20','P40','2021-12-04','2021-12-09','900.0'),
+	('40','P40','2021-12-04','2021-12-04','60.0'),
+	('50','P40','2021-12-04','2021-12-04','60.0'),
+	('40','P40','2021-12-06','2021-12-06','60.0'),
+	('50','P40','2021-12-06','2021-12-06','60.0'),
+	('40','P40','2021-12-07','2021-12-07','60.0'),
+	('50','P40','2021-12-07','2021-12-07','60.0'),
+	('40','P40','2021-12-08','2021-12-08','60.0'),
+	('50','P40','2021-12-08','2021-12-08','60.0');</pre>
+        </div>
+      </div>
   </main>
   <script src="assets/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/highlight.min.js"></script>

@@ -74,7 +74,9 @@ const app = new Vue({
       this.saveAnswers();
     },
     loadCorrectAnswers: function () {
-      //this.userQueries = this.allLi.map(li => li.correctQuery);
+      this.allQuestions.forEach(question => {
+        question.queries.forEach(query => query.answer = query.correct);
+      });
       this.saveAnswers();
     },
     resetAnswersClicked: function () {
