@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TP n°5</title>
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/css/default.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+  <main id="main" class="container">
+    <h1>TP n°5</h1> <!---->
+    <div class="my-1">
+      <ol>
+        <li>
+          <div class="my-1">
+            <p>Afin de gérer les hospitalisations des patients des différents services d'un hôpital, on se
+              propose de créer la base de données intitulée "Gestion_Hospitalisation" définie par le schéma relationnel
+              simplifié suivant:</p>
+            <blockquote>
+              <p><strong>service(<u>NumServ</u>, LibServ)</strong></p>
+              <p><strong>patient(<u>CodePat</u>, Nom, Prénom, DateNaiss, Mutuelle)</strong></p>
+              <p><strong>hospitalisation(<u>NumServ#, CodePat#, DateEntree</u>, DateSortie, Frais)</strong></p>
+            </blockquote>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">
+            Créer la table <code>service</code>.
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>CREATE TABLE service (
+  NumServ INT NOT NULL PRIMARY KEY,
+  LibServ VARCHAR(32) NOT NULL
+);</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">
+            Créer la table <code>patient</code>.
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>CREATE TABLE patient (
+  CodePat VARCHAR(6) NOT NULL PRIMARY KEY CHECK (LEFT(CodePat, 1) = 'P'),
+  Nom VARCHAR(64) NOT NULL,
+  Prenom VARCHAR(64) NOT NULL,
+  DateNaiss DATE,
+  Genre CHAR(1) NOT NULL DEFAULT 'M' CHECK(Genre IN ('M', 'F')),
+  Mutuelle BOOLEAN DEFAULT 0
+);</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">
+            Créer la table <code>hospitalisation</code>.
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>CREATE TABLE hospitalisation (
+  NumServ INT NOT NULL,
+  CodePat VARCHAR(6) NOT NULL,
+  DateEntree DATE NOT NULL DEFAULT NOW(),
+  DateSortie DATE CHECK(DateSortie &gt;= DateEntree OR DateSortie IS NULL),
+  Frais DOUBLE PRECISION NOT NULL DEFAULT 0 CHECK(Frais &gt;= 0),
+  PRIMARY KEY (NumServ, CodePat, DateEntree),
+  FOREIGN KEY (NumServ) 
+    REFERENCES service (NumServ)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (CodePat)
+    REFERENCES patient (CodePat)
+    ON UPDATE CASCADE ON DELETE CASCADE
+);</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">
+            Insérer les données suivantes dans la table <code>service</code>.
+            <pre><code class="nohighlight">+---------+-------------+
+| NumServ | LibServ     |
++---------+-------------+
+|      10 | Urgences    |
+|      20 | Cardiologie |
+|      30 | Chirurgie   |
+|      40 | Radiologie  |
+|      50 | Laboratoire |
++---------+-------------+</code></pre>
+            <p><strong>Compléter la requête suivante.</strong></p>
+          </div>
+          <div class="my-1 p-break">
+            <pre class="sql"><code>INSERT INTO service (NumServ, LibServ)
+VALUES ('10','Urgences'),
+  ('20','Cardiologie'),
+  ('30','Chirurgie'),
+  ('40','Radiologie'),
+  ('50','Laboratoire');</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">
+            Insérer les données suivantes dans la table <code>patient</code>.
+            <pre><code class="nohighlight">+---------+-----------+--------+------------+-------+----------+
+| CodePat | Nom       | Prenom | DateNaiss  | Genre | Mutuelle |
++---------+-----------+--------+------------+-------+----------+
+| P13     | Dhieb     | Hamed  | 1965-07-21 | M     |        1 |
+| P16     | Karrout   | Hedia  | 2004-02-09 | F     |        1 |
++---------+-----------+--------+------------+-------+----------+</code></pre>
+            <p><strong>Compléter la requête suivante.</strong></p>
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>INSERT INTO patient (CodePat, Nom, Prenom, Genre, DateNaiss, Mutuelle)
+VALUES ('P13','Dhieb','Hamed','M','1965-07-21','1'),
+  ('P16','Karrout','Hedia','F','2004-02-09','1');</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">
+            Insérer les données suivantes dans la table <code>hospitalisation</code>.
+            <pre><code class="nohighlight">+---------+---------+------------+------------+-------+
+| NumServ | CodePat | DateEntree | DateSortie | Frais |
++---------+---------+------------+------------+-------+
+|      10 | P13     | 2021-06-28 | 2021-06-28 |   241 |
+|      10 | P16     | 2021-06-12 | 2021-06-12 |   894 |
++---------+---------+------------+------------+-------+</code></pre>
+            <p><strong>Compléter la requête suivante.</strong></p>
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>INSERT INTO hospitalisation (NumServ, CodePat, DateEntree, DateSortie, Frais)
+VALUES ('10','P13','2021-06-28','2021-06-28','241.0'),
+  ('10','P16','2021-06-12','2021-06-12','894.0');</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">
+            Insérer les données suivantes dans la table <code>patient</code>.
+            <p><strong>Exécuter simplement la requête suivante.</strong></p>
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>INSERT INTO patient (CodePat, Nom, Prenom, Genre, DateNaiss, Mutuelle)
+VALUES ('P19','Feki','Hichem','M','1950-07-23','0'),
+  ('P22','Ben Salem','Souha','F','2007-06-29','1'),
+  ('P25','Mejri','Sami','M','1985-06-16','0'),
+  ('P28','Badii','Mayssa','F','1991-10-16','1'),
+  ('P31','Ketari','Nabil','M','1984-04-11','1'),
+  ('P34','Hamdi','Radhia','F','2004-09-04','0'),
+  ('P37','Béji','Mejdi','M','1996-09-08','1'),
+  ('P40','Khalil','Bochra','F','1956-03-21','1');</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">
+            Insérer les données suivantes dans la table <code>hospitalisation</code>.
+            <p><strong>Exécuter simplement la requête suivante.</strong></p>
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>INSERT INTO hospitalisation (NumServ, CodePat, DateEntree, DateSortie, Frais)
+VALUES ('30','P13','2021-06-29','2021-06-30','350.0');</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher le nombre de patients dans la table <code>patient</code>.</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT COUNT(*) AS nbre_patients FROM patient;</code></pre> <!---->
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher le nombre total d'hospitalisations dans la table
+            <code>hospitalisation</code>.
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT COUNT(*) AS nbre_hosp FROM hospitalisation;</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher le nombre total de patients abonnés à une mutuelle.</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT COUNT(*) AS nbre_pat_mut FROM patient WHERE Mutuelle = 1;</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher le nombre total d'hospitalisations <code>DateEntree</code> durant le
+            mois de Janvier.</div>
+          <div class="my-1">
+            <pre
+              class="sql"><code>SELECT COUNT(*) AS nbre_hosp FROM hospitalisation WHERE MONTH(DateEntree) = 1;</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher toutes les hospitalisations du mois de Janvier.</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT * FROM hospitalisation WHERE MONTH(DateEntree) = 1;</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Calculer les frais d'hospitalisation du patient <code>CodePat = P28</code> durant le
+            mois de Janvier.</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT SUM(Frais) AS tot_frais
+FROM hospitalisation 
+WHERE MONTH(DateEntree) = 1 AND 
+  CodePat = 'P28';</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher la liste des personnes (CodePat, Nom, Prenom, DateNaiss, Mutuelle)
+            hospitalisées au mois de Janvier sans redondances.</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT DISTINCT p.CodePat, Nom, Prenom, DateNaiss, Mutuelle 
+FROM hospitalisation AS h, patient AS p
+WHERE h.CodePat = p.CodePat AND 
+  MONTH(DateEntree) = 1;</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher les informations des patients les plus âgés (CodePat, Nom, Prenom,
+            DateNaiss, Mutuelle).</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT CodePat, Nom, Prenom, DateNaiss, Mutuelle 
+FROM patient
+WHERE DateNaiss = (SELECT MIN(DateNaiss) FROM patient);</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher les informations des patients les mois âgés et les plus âgés (CodePat,
+            Nom, Prenom,
+            DateNaiss, Mutuelle) en ordre décroissant de leurs <code>DateNaiss</code>.</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT CodePat, Nom, Prenom, DateNaiss, Mutuelle 
+FROM patient
+WHERE DateNaiss = (SELECT MIN(DateNaiss) FROM patient) OR
+  DateNaiss = (SELECT MAX(DateNaiss) FROM patient)
+ORDER BY DateNaiss DESC;</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher les services (NumServ, LibServ), sans redondances, dans lequels a été
+            hospitalisée le patient "Souha Ben Salem".</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT DISTINCT s.NumServ, LibServ
+FROM service AS s, hospitalisation AS h, patient AS p
+WHERE s.NumServ = h.NumServ AND p.CodePat = h.CodePat AND
+  Nom = 'Ben Salem' AND Prenom = 'Souha';</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher les services (NumServ, LibServ), sans redondances, dans lequels le patient
+            "Souha Ben Salem" n'a pas été hospitalisé.</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT NumServ, LibServ
+FROM service
+WHERE NumServ NOT IN (
+  SELECT DISTINCT s.NumServ
+  FROM service AS s, hospitalisation AS h, patient AS p
+  WHERE s.NumServ = h.NumServ AND p.CodePat = h.CodePat AND
+    Nom = 'Ben Salem' AND Prenom = 'Souha');</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher les informations des patients, (NumServ, LibServ, Nom, Prenom, DateEntree,
+            DateSortie) et le nombre de jours d'hospitalisation, dont la date de sortie <code>DateSortie</code> n'est
+            pas
+            dans le même mois que la date d'entrée <code>DateEntree</code>.
+          </div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT s.NumServ, LibServ, Nom, Prenom, DateEntree, DateSortie, 
+DATEDIFF(DateSortie, DateEntree) AS NbreJours
+FROM service AS s, hospitalisation AS h, patient AS p
+WHERE s.NumServ = h.NumServ AND p.CodePat = h.CodePat AND
+  MONTH(DateEntree) != MONTH(DateSortie);</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher le nombre de jours maximal d'hospitalisation.</div>
+          <div class="my-1">
+            <pre><code>SELECT MAX(DATEDIFF(DateSortie, DateEntree)) AS max_jours FROM hospitalisation;</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="my-1">Afficher les informations des patients (Nom, Prenom, DateEntree, DateSortie) qui ont le top
+            de jours
+            d'hospitalisation ainsi que les services (LibServ) où ont été admis.</div>
+          <div class="my-1">
+            <pre class="sql"><code>SELECT Nom, Prenom, LibServ, DateEntree, DateSortie
+FROM hospitalisation AS h, service AS s, patient AS p
+WHERE s.NumServ = h.NumServ AND p.CodePat = h.CodePat AND
+  DATEDIFF(DateSortie, DateEntree) = (
+    SELECT MAX(DATEDIFF(DateSortie, DateEntree)) FROM hospitalisation
+  );</code></pre>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </main>
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/highlight.min.js"></script>
+  <script>
+    document.querySelectorAll("pre>code").forEach(block => hljs.highlightElement(block));
+  </script>
+  <script src="assets/js/vue.min.js"></script>
+  <script src="assets/apps/app05.js"></script>
+
+
+</body>
+
+</html>
